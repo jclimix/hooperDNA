@@ -116,10 +116,8 @@ else:
     print("Div with player stats not found on the page.")
 
 
-# Convert updated college player's stats into a weighted NumPy array for Euclidean distance
 college_stats = np.array([college_player[stat] * weights[stat] for stat in college_player.keys()]).reshape(1, -1)
 
-# Empty list to store DataFrames
 results = []
 
 dir = './sample_DB/'
@@ -132,7 +130,7 @@ for year in range(2015, 2025):
     
     if os.path.exists(csv_file):
         # DuckDB: Load data from CSV
-        query = f"SELECT * FROM '{csv_file}'"
+        query = f'SELECT * FROM "{csv_file}"'
         season_data = duckdb.query(query).df()
 
         # Filter out only the stats that are present in the college_player dict for comparison
@@ -164,48 +162,35 @@ for year in range(2015, 2025):
                 # Apply the weights to NBA stats for comparison
                 weighted_nba_stats = filtered_nba_stats.apply(lambda row: row * np.array([weights[stat] for stat in stat_columns]), axis=1)
 
+                # Ensure all values are numeric, replace NaNs and infs
+                weighted_nba_stats = weighted_nba_stats.apply(pd.to_numeric, errors='coerce').fillna(0).replace([np.inf, -np.inf], 0)
+
                 # Calculate Euclidean distance between weighted college player stats and weighted NBA players' stats
                 distances = weighted_nba_stats.apply(lambda row: euclidean(row, college_stats.flatten()), axis=1)
 
                 # Convert distances Series to DataFrame with proper index
                 distances_df = pd.DataFrame({'Distance': distances.values}, index=filtered_season_data.index)
 
-                # Find the NBA player with the smallest distance
                 min_dist_index = np.argmin(distances)
 
-                # show distances and index (testing)
-                # print("Distances DataFrame:")
-                # print(distances_df)
-                # print("Index with minimum distance:", min_dist_index)
-
-                # Check if the index exists
                 if min_dist_index in distances_df.index:
-                    # Convert the distance to a percentage (optional, for easier interpretation)
                     distance_percentage = (1 / (1 + distances_df.loc[min_dist_index, 'Distance'])) * 100
 
-                    # Ensure that the DataFrame only contains one row of data
                     most_similar_player_df = pd.DataFrame([filtered_season_data.iloc[min_dist_index]], columns=filtered_season_data.columns)
 
-                    # Add the distance score to the DataFrame
                     most_similar_player_df.loc[most_similar_player_df.index[0], 'Similarity (%)'] = f'{distance_percentage:.2f}%'
 
-                    # Append the DataFrame to the list
                     results.append(most_similar_player_df)
                 else:
                     print(f"Index {min_dist_index} is not found in distances DataFrame.")
             else:
                 print(f"No matching NBA positions found for college position: {college_player_pos}.")
         else:
-            print(f"One or more columns from {stat_columns} are missing in {csv_file}.")
+            print(f"One or more columns from {stat_columns} are missing in {csv_file}")
     else:
-        print(f"File not found: {csv_file}")
+        print(f"{csv_file} does not exist.")
 
-player_dna_results_df = pd.concat(results, ignore_index=True)
 
-# drop rows with ALL null values (or else error)
-most_similar_players = player_dna_results_df.dropna(how='all')
-
-player_dna_results_df = player_dna_results_df.sort_values("Similarity (%)", ascending=False)
-
+    final_df = pd.concat(results, ignore_index=True)
 print("\nNBA Player 'DNA' Matches:")
-print(player_dna_results_df)
+print(final_df)
