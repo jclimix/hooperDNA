@@ -7,7 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 
 college_player_id = 'jaedon-ledee-1'
-
+ 
 # player stats dictionary (college)
 college_player = {
     'MP': 0.0,    # Minutes per game
