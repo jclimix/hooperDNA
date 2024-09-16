@@ -6,9 +6,8 @@ import os
 import requests
 from bs4 import BeautifulSoup
 
-college_player_id = 'jaedon-ledee-1'
+college_player_id = 'arturo-dean-1'
  
-# player stats dictionary (college)
 college_player = {
     'MP': 0.0,    # Minutes per game
     'FG': 0.0,    # Field Goals Made per game
@@ -31,7 +30,6 @@ college_player = {
     'PTS': 0.0    # Points per game
 }
 
-# initial raw weights
 raw_weights = {
     'MP': 6.0,    # Minutes per game
     'FG': 5.0,    # Field Goals Made per game
