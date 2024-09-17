@@ -182,32 +182,3 @@ nba_dna_matches = nba_dna_matches.sort_values(by='Similarity (%)', ascending=Fal
 
 print(f"\n{player_name}'s NBA Player Matches (In Last Decade):")
 print(nba_dna_matches)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
