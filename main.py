@@ -6,7 +6,7 @@ import os
 import requests
 from bs4 import BeautifulSoup
 
-college_player_id = 'zach-edey-1'
+college_player_id = 'jasper-floyd-1'
 
 csv_file_path = './sample_DB/college_data/college_basketball_players.csv'
 
@@ -63,7 +63,7 @@ weight_profiles = {
 }
 
 # Select the weight profile to use (e.g., 'offense-heavy', 'defense-heavy', or 'balanced')
-selected_profile = 'balanced'
+selected_profile = 'offense'
 raw_weights = weight_profiles[selected_profile]
 
 # Normalize the selected weights so they sum to 100% (1.0)
@@ -84,7 +84,7 @@ if div:
     if table:
         college_player_stats_df = pd.read_html(str(table))[0]
 
-        print(f"{player_name} Stats:")
+        print(f"{player_name} | Stats:")
         print(college_player_stats_df)
 
         # if the 'Season' column exists
@@ -105,7 +105,7 @@ if div:
                     print(pd.DataFrame([latest_stats], columns=college_player_stats_df.columns))
 
                     # College stat adjustments (NCAA => NBA)
-                    college_player["MP"] *= 1.2  # 40 vs 48 total min
+                    college_player["MP"] *= 1.17  # 40 vs 48 total min
                     college_player["PTS"] *= 1.15  # skew scoring for better offensive player matches
                 else:
                     print("No valid row found before 'Career' row.")
@@ -124,7 +124,7 @@ college_stats = np.array([college_player[stat] * weights[stat] for stat in colle
 print("\nCustom Match Profile: " + str(selected_profile))
 
 print("\nCollege to NBA Conversion:")
-print("MP: " + str(college_player["MP"]) + " | PTS: " + str(round(college_player["PTS"], 2)))
+print("MP: " + str(round(college_player["MP"], 2)) + " | PTS: " + str(round(college_player["PTS"], 2)))
 
 results = []
 dir = './sample_DB/nba_raw_data'
