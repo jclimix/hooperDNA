@@ -6,7 +6,16 @@ import os
 import requests
 from bs4 import BeautifulSoup
 
-college_player_id = 'caitlin-clark-1'
+college_player_id = 'zach-edey-1'
+
+csv_file_path = './sample_DB/college_data/college_basketball_players.csv'
+
+df = pd.read_csv(csv_file_path)
+
+row = df[df['playerId'] == college_player_id]
+
+if not row.empty:
+    player_name = row['playerName'].values[0]
 
 # player stats dictionary (college)
 college_player = {
@@ -54,7 +63,7 @@ weight_profiles = {
 }
 
 # Select the weight profile to use (e.g., 'offense-heavy', 'defense-heavy', or 'balanced')
-selected_profile = 'offense'
+selected_profile = 'balanced'
 raw_weights = weight_profiles[selected_profile]
 
 # Normalize the selected weights so they sum to 100% (1.0)
@@ -75,7 +84,7 @@ if div:
     if table:
         college_player_stats_df = pd.read_html(str(table))[0]
 
-        print("College Player Stats:")
+        print(f"{player_name} Stats:")
         print(college_player_stats_df)
 
         # if the 'Season' column exists
@@ -92,7 +101,7 @@ if div:
                         if stat in latest_stats.index:
                             college_player[stat] = latest_stats[stat]
 
-                    print("\nSelected College Player Statline for Euclidean Distance Analysis:")
+                    print(f"\n{player_name}'s Statline for Euclidean Distance Analysis:")
                     print(pd.DataFrame([latest_stats], columns=college_player_stats_df.columns))
 
                     # College stat adjustments (NCAA => NBA)
@@ -118,11 +127,11 @@ print("\nCollege to NBA Conversion:")
 print("MP: " + str(college_player["MP"]) + " | PTS: " + str(round(college_player["PTS"], 2)))
 
 results = []
-dir = './sample_DB/'
+dir = './sample_DB/nba_raw_data'
 
 # 2015 to 2024
 for year in range(2015, 2025):
-    csv_file = os.path.join(dir, f'{year}NBAPlayerStats_HprDNA.csv')
+    csv_file = os.path.join(dir, f'{year}_NBAPlayerStats_HprDNA_raw.csv')
     
     if os.path.exists(csv_file):
         query = f"SELECT * FROM '{csv_file}'"
@@ -171,5 +180,5 @@ nba_dna_matches = pd.concat(results, ignore_index=True)
 # Sort by similarity score (descending)
 nba_dna_matches = nba_dna_matches.sort_values(by='Similarity (%)', ascending=False).reset_index(drop=True)
 
-print("\nMost Similar NBA Players Across Seasons:")
+print(f"\n{player_name}'s NBA Player Matches (In Last Decade):")
 print(nba_dna_matches)
