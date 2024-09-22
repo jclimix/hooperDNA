@@ -50,7 +50,6 @@ def test_stat_adjustments():
         "PTS": 15.0
     }
     
-    # NCAA to NBA adjustments
     college_player["MP"] *= 1.17
     college_player["PTS"] *= 1.15
     
@@ -59,10 +58,10 @@ def test_stat_adjustments():
 
 # Test 4: Verify NBA player filtering and distance calculation
 def test_filter_nba_players_and_calculate_similarity():
-    college_stats = np.array([10.0, 20.0]).reshape(1, -1)  # Mocked college stats
-    nba_stats = np.array([[8.0, 22.0], [15.0, 18.0]])      # Mocked NBA stats
+    college_stats = np.array([10.0, 20.0]).reshape(1, -1) 
+    nba_stats = np.array([[8.0, 22.0], [15.0, 18.0]])
     
-    weighted_nba_stats = nba_stats  # Assuming weights are already applied
+    weighted_nba_stats = nba_stats 
     distances = np.apply_along_axis(lambda row: euclidean(row, college_stats.flatten()), 1, weighted_nba_stats)
     
     assert len(distances) == 2, "There should be two distance calculations"
@@ -91,13 +90,11 @@ def test_most_similar_player_selection():
         'Player': ['NBA Player 1', 'NBA Player 2', 'NBA Player 3'],
         'MP': [10.0, 15.0, 12.0],
         'PTS': [20.0, 25.0, 22.0],
-        'Similarity (%)': [90.0, 85.0, 95.0]  # Simulated similarity scores
+        'Similarity (%)': [90.0, 85.0, 95.0]  # simulated similarity scores
     })
 
-    # Sort and pick the most similar player (highest similarity)
     sorted_nba_data = nba_data.sort_values(by='Similarity (%)', ascending=False).reset_index(drop=True)
     most_similar_player = sorted_nba_data.iloc[0]['Player']
 
-    # Assert that the most similar player is correctly identified
     assert most_similar_player == 'NBA Player 3', "The most similar player should be 'NBA Player 3'"
 
