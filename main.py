@@ -17,7 +17,6 @@ row = df[df['playerId'] == college_player_id]
 if not row.empty:
     player_name = row['playerName'].values[0]
 
-# player stats dictionary (college)
 college_player = {
     'MP': 0.0,    # Minutes per game
     'FG': 0.0,    # Field Goals Made per game
@@ -40,7 +39,6 @@ college_player = {
     'PTS': 0.0    # Points per game
 }
 
-# Weight profiles for different focuses (offense, defense, balanced)
 weight_profiles = {
     'offense': {
         'MP': 6.0, 'FG': 7.0, 'FGA': 5.0, 'FG%': 6.0, '3P': 9.0, '3PA': 5.0,
@@ -62,15 +60,12 @@ weight_profiles = {
     }
 }
 
-# Select the weight profile to use (e.g., 'offense-heavy', 'defense-heavy', or 'balanced')
 selected_profile = 'offense'
 raw_weights = weight_profiles[selected_profile]
 
-# Normalize the selected weights so they sum to 100% (1.0)
 total_weight = sum(raw_weights.values())
 weights = {stat: value / total_weight for stat, value in raw_weights.items()}
 
-# Scrape College Basketball Ref site to pull selected player's stats
 url = f'https://www.sports-reference.com/cbb/players/{college_player_id}.html'
 response = requests.get(url)
 html_content = response.content
@@ -87,7 +82,6 @@ if div:
         print(f"{player_name} | Stats:")
         print(college_player_stats_df)
 
-        # if the 'Season' column exists
         if 'Season' in college_player_stats_df.columns:
             career_index = college_player_stats_df[college_player_stats_df['Season'] == 'Career'].index
 
@@ -118,7 +112,6 @@ if div:
 else:
     print("Div with player stats not found on the page.")
 
-# Convert updated college player's stats into a weighted NumPy array for Euclidean distance
 college_stats = np.array([college_player[stat] * weights[stat] for stat in college_player.keys()]).reshape(1, -1)
 
 print("\nCustom Match Profile: " + str(selected_profile))
@@ -174,10 +167,8 @@ for year in range(2015, 2025):
     else:
         print(f"File not found: {csv_file}")
 
-# Combine all result DataFrames into a single DataFrame
 nba_dna_matches = pd.concat(results, ignore_index=True)
 
-# Sort by similarity score (descending)
 nba_dna_matches = nba_dna_matches.sort_values(by='Similarity (%)', ascending=False).reset_index(drop=True)
 
 print(f"\n{player_name}'s NBA Player Matches (In Last Decade):")
