@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Comparison</title>
+    <style>
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .comparison-chart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+        .stat-row {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .stat-bar {
+            width: 150px;
+            height: 20px;
+            background-color: lightgray;
+            margin: 0 10px;
+            position: relative;
+            border-radius: 10px; /* Rounded edges for the outer bar */
+        }
+        .bar-inner {
+            height: 100%;
+            position: absolute;
+            top: 0;
+            border-radius: 10px; /* Rounded edges for the inner bar */
+        }
+        .bar-inner.blue {
+            background-color: #4A90E2;
+        }
+        .bar-inner.orange {
+            background-color: #F5A623;
+        }
+        .stat-label {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="comparison-chart">
+            {% for stat in player1_stats.keys() %}
+            <div class="stat-row">
+                <span>{{ player1_stats[stat] }}</span>
+                <div class="stat-bar">
+                    <div class="bar-inner blue" 
+                        style="width: {% if stat in percentage_stats %}
+                                      {{ (player1_stats[stat] / max_percentage) * 100 }}%
+                                   {% else %}
+                                      {{ (player1_stats[stat] / max_non_percentage) * 100 }}%
+                                   {% endif %};"></div>
+                </div>
+                <span class="stat-label">{{ stat.upper() }}</span>
+                <div class="stat-bar">
+                    <div class="bar-inner orange" 
+                        style="width: {% if stat in percentage_stats %}
+                                      {{ (player2_stats[stat] / max_percentage) * 100 }}%
+                                   {% else %}
+                                      {{ (player2_stats[stat] / max_non_percentage) * 100 }}%
+                                   {% endif %};"></div>
+                </div>
+                <span>{{ player2_stats[stat] }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,35 @@
+import requests
+from bs4 import BeautifulSoup
+import re
+
+# Function to scrape the height of any player from the new div format
+def scrape_player_height(url):
+    try:
+        # Send a GET request to the URL
+        response = requests.get(url)
+        response.raise_for_status()
+
+        # Parse the HTML content with BeautifulSoup
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Regular expression pattern to match heights (ranging from 4-0 to 8-11)
+        height_pattern = re.compile(r'([4-8]-\d{1,2})')
+
+        # Find the <span> tag that contains the height
+        height_element = soup.find('span', string=height_pattern)
+
+        if height_element:
+            # Extract the height from the matched pattern
+            height = height_element.text.strip()
+            print(f"Player height: {height}")
+        else:
+            print("Height element not found.")
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error while scraping the webpage: {e}")
+
+# URL of the page you want to scrape (replace with the actual player page URL)
+url = 'https://www.sports-reference.com/cbb/players/zach-edey-1.html'  # Replace this with the actual URL
+
+# Call the function to scrape the height
+scrape_player_height(url)
