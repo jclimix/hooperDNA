@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import re
 
 # Function to scrape the height of any player
-def scrape_player_height(url):
+def scrape_NBA_height(url):
     try:
         # Send a GET request to the URL
         response = requests.get(url)
@@ -36,4 +36,4 @@ def scrape_player_height(url):
 url = 'https://www.basketball-reference.com/players/j/jamesbr02.html'  # Replace this with the actual URL
 
 # Call the function to scrape the height
-scrape_player_height(url)
+scrape_NBA_height(url)

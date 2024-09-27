@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 # Function to scrape the web page
-def scrape_image_links(url, target_id):
+def scrape_college_img(url, target_id):
     try:
         # Send a GET request to the URL
         response = requests.get(url)
@@ -43,4 +43,4 @@ url = 'https://www.sports-reference.com/cbb/players/caitlin-clark-1.html'  # Rep
 target_id = 'meta'  # Replace with the actual id
 
 # Call the function to scrape the page
-scrape_image_links(url, target_id)
+scrape_college_img(url, target_id)

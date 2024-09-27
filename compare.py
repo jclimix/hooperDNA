@@ -14,19 +14,23 @@ def compare_players():
     }
     
     # Define the max values for percentage and non-percentage stats
-    max_non_percentage = 42  # Set maximum value for non-percentage stats
+    max_pts_percentage = 29  # Set maximum value for non-percentage stats
+    max_non_percentage = 15  # Set maximum value for non-percentage stats
     max_percentage = 100     # Maximum for percentage stats
 
     # Define the percentage stats to distinguish between the two ranges
     percentage_stats = ["FG%", "eFG%", "2P%", "3P%", "FT%"]
+    pts_stats = ["PTS"]
 
     return render_template(
         'comparison.html', 
         player1_stats=player1_stats, 
-        player2_stats=player2_stats, 
+        player2_stats=player2_stats,
+        max_pts_percentage=max_pts_percentage, 
         max_percentage=max_percentage, 
         max_non_percentage=max_non_percentage,
-        percentage_stats=percentage_stats
+        percentage_stats=percentage_stats,
+        pts_stats=pts_stats
     )
 
 if __name__ == '__main__':
