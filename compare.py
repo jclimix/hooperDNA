@@ -4,11 +4,11 @@ app = Flask(__name__)
 
 @app.route('/')
 def compare_players():
-    player1_stats = {
+    college_player_stats = {
         "PTS": 29.5, "AST": 5.2, "REB": 3.6, "BLK": 2.6, "STL": 1.9,
         "FG%": 49.5, "eFG%": 53.2, "2P%": 52.3, "3P%": 36.4, "FT%": 86.7
     }
-    player2_stats = {
+    nba_player_stats = {
         "PTS": 30.4, "AST": 4.8, "REB": 3.8, "BLK": 2.5, "STL": 1.4,
         "FG%": 47.8, "eFG%": 52.1, "2P%": 50.4, "3P%": 38.2, "FT%": 88.1
     }
@@ -24,8 +24,8 @@ def compare_players():
 
     return render_template(
         'comparison.html', 
-        player1_stats=player1_stats, 
-        player2_stats=player2_stats,
+        college_player_stats=college_player_stats, 
+        nba_player_stats=nba_player_stats,
         max_pts_percentage=max_pts_percentage, 
         max_percentage=max_percentage, 
         max_non_percentage=max_non_percentage,
