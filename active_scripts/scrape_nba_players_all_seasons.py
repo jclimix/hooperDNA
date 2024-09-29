@@ -17,15 +17,15 @@ os.makedirs(clean_save_dir, exist_ok=True)
 
 # Mapping of old column names to camel case with capital starting letters and no spaces
 column_mapping = {
-    'Rk': 'Rank', 'Player': 'Player', 'Age': 'Age', 'Tm': 'Team', 'Pos': 'Position',
-    'G': 'Games', 'GS': 'GamesStarted', 'MP': 'MinutesPlayed', 'FG': 'FieldGoalsMade',
-    'FGA': 'FieldGoalsAttempted', 'FG%': 'FieldGoalPercentage', '3P': 'ThreePointFieldGoalsMade',
-    '3PA': 'ThreePointFieldGoalsAttempted', '3P%': 'ThreePointFieldGoalPercentage',
-    '2P': 'TwoPointFieldGoalsMade', '2PA': 'TwoPointFieldGoalsAttempted', '2P%': 'TwoPointFieldGoalPercentage',
-    'eFG%': 'EffectiveFieldGoalPercentage', 'FT': 'FreeThrowsMade', 'FTA': 'FreeThrowsAttempted',
-    'FT%': 'FreeThrowPercentage', 'ORB': 'OffensiveRebounds', 'DRB': 'DefensiveRebounds', 'TRB': 'TotalRebounds',
-    'AST': 'Assists', 'STL': 'Steals', 'BLK': 'Blocks', 'TOV': 'Turnovers', 'PF': 'PersonalFouls', 'PTS': 'Points',
-    'Awards': 'Awards'
+    'Rk': 'rank', 'Player': 'player', 'Age': 'age', 'Tm': 'team', 'Pos': 'position',
+    'G': 'games', 'GS': 'games_started', 'MP': 'minutes_played', 'FG': 'field_goals_made',
+    'FGA': 'field_goals_attempted', 'FG%': 'field_goal_percentage', '3P': 'three_point_field_goals_made',
+    '3PA': 'three_point_field_goals_attempted', '3P%': 'three_point_field_goal_percentage',
+    '2P': 'two_point_field_goals_made', '2PA': 'two_point_field_goals_attempted', '2P%': 'two_point_field_goal_percentage',
+    'eFG%': 'effective_field_goal_percentage', 'FT': 'free_throws_made', 'FTA': 'free_throws_attempted',
+    'FT%': 'free_throw_percentage', 'ORB': 'offensive_rebounds', 'DRB': 'defensive_rebounds', 'TRB': 'total_rebounds',
+    'AST': 'assists', 'STL': 'steals', 'BLK': 'blocks', 'TOV': 'turnovers', 'PF': 'personal_fouls', 'PTS': 'points',
+    'Awards': 'awards'
 }
 
 # Initial year
