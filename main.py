@@ -163,7 +163,7 @@ def find_nba_matches(college_latest_stats, weights, college_player_dict):
             if all(col in season_data.columns for col in stat_columns):
                 nba_stats = season_data[stat_columns].fillna(0)
 
-                college_player_pos = college_latest_stats.get('Pos', 'Unknown')
+                college_player_pos = college_latest_stats.get('Pos', 'UNKWN')
 
                 pos_mapping = {'G': ['PG', 'SG'], 'F': ['SF', 'PF'], 'C': ['C']}
                 nba_positions = pos_mapping.get(college_player_pos, [])

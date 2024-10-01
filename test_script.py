@@ -1,100 +1,119 @@
 import pytest
 import pandas as pd
 import numpy as np
-from unittest.mock import patch
-from scipy.spatial.distance import euclidean
-import duckdb
-import os
 import requests
 from bs4 import BeautifulSoup
+from unittest.mock import patch, MagicMock
+from scipy.spatial.distance import euclidean
 
-# Test 1: Verify college player data is loaded correctly from CSV
-def test_read_college_player_data():
-    csv_file_path = './sample_DB/college_data/college_basketball_players.csv'
-    df = pd.read_csv(csv_file_path)
-    
-    college_player_id = 'jasper-floyd-1'
-    row = df[df['playerId'] == college_player_id]
-    
-    assert not row.empty, "College player data should not be empty"
-    assert row['playerName'].values[0] == "Jasper Floyd", "Player name should match"
+from main import (
+    init_college_player_info, 
+    init_weight_profiles, 
+    scrape_college_stats, 
+    find_nba_matches
+)
 
-# Test 2: Mock the web scraping part for player stats
-@patch('requests.get')
-def test_fetch_player_stats(mock_get):
-    college_player_id = 'jasper-floyd-1'
-    mock_html = '''
-    <div id="div_players_per_game">
-        <table>
-            <tr><th>Season</th><th>MP</th><th>PTS</th></tr>
-            <tr><td>2023-24</td><td>30.0</td><td>15.0</td></tr>
-            <tr><td>Career</td></tr>
-        </table>
-    </div>
-    '''
-    mock_get.return_value.content = mock_html
-    url = f'https://www.sports-reference.com/cbb/players/{college_player_id}.html'
+# Sample player fixture
+@pytest.fixture
+def sample_college_player():
+    return 'jasper-floyd-1'
 
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    div = soup.find('div', id='div_players_per_game')
+# CSV file path fixture
+@pytest.fixture
+def csv_file_path():
+    return './sample_DB/college_data/college_basketball_players.csv'
 
-    assert div is not None, "The div with player stats should be found"
-    table = div.find('table')
-    assert table is not None, "The stats table should exist"
-
-# Test 3: Verify stat calculation adjustments (Minutes and Points)
-def test_stat_adjustments():
-    college_player = {
-        "MP": 30.0,
-        "PTS": 15.0
-    }
-    
-    college_player["MP"] *= 1.17
-    college_player["PTS"] *= 1.15
-    
-    assert round(college_player["MP"], 2) == 35.1, "Minutes should be adjusted correctly"
-    assert round(college_player["PTS"], 2) == 17.25, "Points should be adjusted correctly"
-
-# Test 4: Verify NBA player filtering and distance calculation
-def test_filter_nba_players_and_calculate_similarity():
-    college_stats = np.array([10.0, 20.0]).reshape(1, -1) 
-    nba_stats = np.array([[8.0, 22.0], [15.0, 18.0]])
-    
-    weighted_nba_stats = nba_stats 
-    distances = np.apply_along_axis(lambda row: euclidean(row, college_stats.flatten()), 1, weighted_nba_stats)
-    
-    assert len(distances) == 2, "There should be two distance calculations"
-    assert round(distances[0], 2) == 2.83, "First distance should be correct"
-    assert round(distances[1], 2) == 5.39, "Second distance should be correct"
-
-# Test 5: Handle missing college player stats
-def test_handle_missing_college_stats():
-    college_player = {
-        'MP': np.nan, 'FG': 0.0, 'FGA': 0.0, 'FG%': np.nan,
-        '3P': 0.0, '3PA': np.nan, 'FT': np.nan, 'FTA': 0.0,
-        'FT%': 0.0, 'ORB': 0.0, 'DRB': 0.0, 'TRB': 0.0,
-        'AST': 0.0, 'STL': 0.0, 'BLK': 0.0, 'TOV': 0.0,
-        'PF': 0.0, 'PTS': 0.0
+# Sample college player dictionary fixture
+@pytest.fixture
+def sample_college_player_dict():
+    return {
+        'MP': 10.0,
+        'FG': 4.0,
+        'FGA': 8.0,
+        'FG%': 50.0,
+        '3P': 2.0,
+        '3PA': 5.0,
+        '3P%': 40.0,
+        'FT': 3.0,
+        'FTA': 4.0,
+        'FT%': 75.0,
+        'ORB': 1.0,
+        'DRB': 3.0,
+        'TRB': 4.0,
+        'AST': 5.0,
+        'STL': 2.0,
+        'BLK': 1.0,
+        'TOV': 2.0,
+        'PF': 3.0,
+        'PTS': 12.0
     }
 
-    # Call the function that processes college stats
-    processed_college_stats = np.array([0 if np.isnan(college_player[stat]) else college_player[stat] for stat in college_player.keys()])
+# Test for initializing college player information
+def test_init_college_player_info(sample_college_player, csv_file_path):
+    # Mocking the CSV data
+    data = {
+        'playerId': [sample_college_player],
+        'playerName': ['Jasper Floyd']
+    }
+    df = pd.DataFrame(data)
 
-    # Ensure that missing stats are handled and no NaN values remain
-    assert not np.isnan(processed_college_stats).any(), "Processed college stats should not have NaN values"
+    with patch('pandas.read_csv', return_value=df):
+        player_name, player_dict = init_college_player_info(sample_college_player, csv_file_path)
+        assert player_name == 'Jasper Floyd'
+        assert isinstance(player_dict, dict)
+        assert 'MP' in player_dict
 
-# Test 6: Picking Most Similar NBA Player
-def test_most_similar_player_selection():
+# Test for initializing weight profiles
+def test_init_weight_profiles():
+    weights = init_weight_profiles('offense')
+    assert isinstance(weights, dict)
+    assert weights['MP'] > 0
+    assert abs(sum(weights.values()) - 1.0) < 1e-5
+
+# Test for scraping college stats
+def test_scrape_college_stats(sample_college_player, csv_file_path):
+    # Step 1: Initialize player info
+    college_player_name, college_player_dict = init_college_player_info(sample_college_player, csv_file_path)
+    
+    # Step 2: Scrape real data from the website
+    college_latest_stats, updated_college_player_dict = scrape_college_stats(sample_college_player, college_player_name, college_player_dict)
+    
+    # Step 3: Assert that the stats have been successfully pulled and updated
+    assert college_latest_stats is not None, "No stats were pulled from the website."
+    assert updated_college_player_dict is not None, "The player dictionary was not updated with new stats."
+    
+    # Step 4: Check that at least some stats have non-zero values after scraping
+    assert any(value != 0 for value in updated_college_player_dict.values()), "No stats were updated in the player dictionary."
+
+# Test for finding NBA matches
+def test_find_nba_matches(sample_college_player_dict):
+    weights = init_weight_profiles('offense')
+
+    # Mocking NBA data with 3 guards
     nba_data = pd.DataFrame({
-        'Player': ['NBA Player 1', 'NBA Player 2', 'NBA Player 3'],
-        'MP': [10.0, 15.0, 12.0],
-        'PTS': [20.0, 25.0, 22.0],
-        'Similarity (%)': [90.0, 85.0, 95.0]  # simulated similarity scores
+        'MP': [30.0, 25.0, 28.0],
+        'FG': [9.0, 8.0, 7.5],
+        'FGA': [18.0, 16.0, 17.0],
+        'FG%': [50.0, 50.0, 44.1],
+        '3P': [3.0, 2.0, 2.5],
+        '3PA': [7.0, 5.0, 6.0],
+        '3P%': [42.9, 40.0, 41.7],
+        'FT': [4.0, 3.0, 3.5],
+        'FTA': [5.0, 4.0, 5.0],
+        'FT%': [80.0, 75.0, 78.0],
+        'ORB': [1.0, 0.5, 0.8],
+        'DRB': [3.0, 4.0, 3.5],
+        'TRB': [4.0, 4.5, 4.3],
+        'AST': [6.0, 5.0, 4.5],
+        'STL': [2.0, 1.5, 1.8],
+        'BLK': [1.0, 0.8, 0.9],
+        'TOV': [2.5, 2.0, 2.3],
+        'PF': [3.0, 2.5, 2.8],
+        'PTS': [25.0, 22.0, 23.5],
+        'Pos': ['PG', 'PG', 'SG']
     })
-
-    sorted_nba_data = nba_data.sort_values(by='Similarity (%)', ascending=False).reset_index(drop=True)
-    most_similar_player = sorted_nba_data.iloc[0]['Player']
-
-    assert most_similar_player == 'NBA Player 3', "The most similar player should be 'NBA Player 3'"
-
+    
+    with patch('duckdb.query', return_value=MagicMock(df=lambda: nba_data)):
+        nba_matches = find_nba_matches(sample_college_player_dict, weights, sample_college_player_dict)
+        assert not nba_matches.empty
+        assert 'Similarity (%)' in nba_matches.columns
