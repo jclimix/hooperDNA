@@ -6,18 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Comparison</title>
     <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap'); /* Importing custom font */
+
         .container {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            height: 80vh;
+            margin-top: 0px;
         }
 
         .comparison-chart {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            font-family: Arial, sans-serif;
+            align-items: center; /* Center items vertically */
+            justify-content: center; /* Center items horizontally */
+            font-family: Roboto, sans-serif;
         }
 
         .stat-row {
@@ -33,7 +38,6 @@
             margin: 0 10px;
             position: relative;
             border-radius: 10px;
-            /* Rounded edges for the outer bar */
         }
 
         .bar-inner {
@@ -41,7 +45,6 @@
             position: absolute;
             top: 0;
             border-radius: 10px;
-            /* Rounded edges for the inner bar */
         }
 
         .bar-inner.blue {
@@ -55,39 +58,166 @@
         .stat-label {
             font-weight: bold;
         }
+
+        /* Add spacing between the images */
+        .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 50px; /* Adjust the space between images */
+            margin-bottom: 20px;
+            margin-left: 60px;
+        }
+
+        .image-container img {
+            max-width: 90px; /* Adjust image size as needed */
+            height: auto;
+        }
+
+        /* Circular percentage chart with modern design */
+        .circular-chart {
+            position: relative;
+            width: 100px; /* Smaller size */
+            height: 100px;
+            align-items: center; /* Center items vertically */
+            justify-content: center; /* Center items horizontally */
+        }
+
+        .circle {
+            fill: none;
+            stroke-width: 6; /* Thinner ring for a more modern look */
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .circle-background {
+            stroke: #f0f0f0; /* Soft light grey for background */
+        }
+
+        .circle-foreground {
+            stroke: #3498db; /* Modern blue color */
+            stroke-dasharray: 282; /* Updated for smaller circle (circumference = 2 * π * r where r = 45) */
+            stroke-dashoffset: 282;
+            transition: stroke-dashoffset 1s ease-out;
+        }
+
+        /* Modern percentage text */
+        .percentage-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px; /* Smaller text for modern look */
+            font-weight: bold;
+            color: #3498db; /* Matches the foreground color */
+            font-family: 'Roboto', sans-serif; /* Sleek, sans-serif font */
+            letter-spacing: 1px; /* Modern spacing between characters */
+        }
+
+        /* Optional: subtle shadow for a modern, flat look */
+        .circular-chart {
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            border-radius: 50%;
+        }
+
+        h1 {
+            text-align: center;
+            font-family: 'Arial', sans-serif;
+            font-size: 36px;
+            color: #333; /* Custom color */
+            margin-bottom: 20px; /* Spacing between h1 and chart */
+        }
+        h2 {
+            text-align: center;
+            font-family: 'Arial', sans-serif;
+            font-size: 24px;
+            color: #333; /* Custom color */
+            margin-bottom: 20px; /* Spacing between h1 and chart */
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
     </style>
 </head>
 
 <body>
+    <h1>HooperDNA</h1>
+    <div class="image-container">
+        <div>
+            <p>College Player</p> <!-- Text above the college player image -->
+            <h2>{{ college_player_name }}</h2> <!-- Text above the college player image -->
+            <img src="{{ college_image_link }}" alt="Image 1">
+            <p>Position: {{ college_player_position }}</p> <!-- Text below the college player image -->
+            <p>Height: {{ college_player_height }}</p> <!-- Text below the college player image -->
+        </div>
+    
+        <!-- Modern Circular Percentage Chart -->
+        <div class="circular-chart">
+            <svg viewBox="0 0 100 100">
+                <!-- Background Circle -->
+                <circle class="circle circle-background" cx="50" cy="50" r="45"></circle>
+                
+                <!-- Foreground Circle that fills based on percentage -->
+                <circle class="circle circle-foreground" cx="50" cy="50" r="45"
+                    style="stroke-dashoffset: calc(282 - (282 * {{ dna_match_percentage }} / 100));"></circle>
+        
+                <!-- Percentage Text in the Center with Custom Font -->
+                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-size="18px" fill="#3498db"
+                    style="font-family: 'Roboto', sans-serif;">
+                    {{ dna_match_percentage }}%
+                </text>
+            </svg>
+        </div>
+    
+        <div>
+            <p>NBA Player</p> <!-- Text above the NBA player image -->
+            <h2>{{ nba_match_player_name }}</h2> <!-- Text above the NBA player image -->
+            <img src="{{ nba_image_link }}" alt="Image 2">
+            <p>Position: {{ nba_player_position }}</p> <!-- Text below the college player image -->
+            <p>Height: {{ nba_player_height }}</p> <!-- Text below the college player image -->
+        </div>
+    </div>
+
     <div class="container">
         <div class="comparison-chart">
-            {% for stat in college_player_stats.keys() %}
+            {% for stat in college_player.keys() %}
             <div class="stat-row">
-                <span>{{ college_player_stats[stat] }}</span>
+                <span>{{ college_player[stat] }}</span>
                 <div class="stat-bar">
-                    <div class="bar-inner blue" 
-                         style="width: 
+                    <div class="bar-inner blue" style="width: 
                             {% if stat in percentage_stats %}
-                                {{ (college_player_stats[stat] / max_percentage) * 100 }}%
-                            {% elif stat in pts_stats %}
-                                {{ (college_player_stats[stat] / max_pts_percentage) * 100 }}%
+                                {{ (college_player[stat] / max_percentage) * 100 }}%
+                            {% elif stat in statbox_42_stats %}
+                                {{ (college_player[stat] / statbox_42) * 100 }}%
+                            {% elif stat in statbox_27_stats %}
+                                {{ (college_player[stat] / statbox_27) * 100 }}%
+                            {% elif stat in statbox_15_stats %}
+                                {{ (college_player[stat] / statbox_15) * 100 }}%
+                            {% elif stat in statbox_5_stats %}
+                                {{ (college_player[stat] / statbox_5) * 100 }}%
                             {% else %}
-                                {{ (college_player_stats[stat] / max_non_percentage) * 100 }}%
+                                {{ (college_player[stat] / statbox_15) * 100 }}%
                             {% endif %};"></div>
                 </div>
                 <span class="stat-label">{{ stat.upper() }}</span>
                 <div class="stat-bar">
-                    <div class="bar-inner orange" 
-                         style="width: 
+                    <div class="bar-inner orange" style="width: 
                             {% if stat in percentage_stats %}
-                                {{ (nba_player_stats[stat] / max_percentage) * 100 }}%
-                            {% elif stat in pts_stats %}
-                                {{ (nba_player_stats[stat] / max_pts_percentage) * 100 }}%
+                                {{ (first_nba_match[stat] / max_percentage) * 100 }}%
+                            {% elif stat in statbox_42_stats %}
+                                {{ (first_nba_match[stat] / statbox_42) * 100 }}%
+                            {% elif stat in statbox_27_stats %}
+                                {{ (first_nba_match[stat] / statbox_27) * 100 }}%
+                            {% elif stat in statbox_15_stats %}
+                                {{ (first_nba_match[stat] / statbox_15) * 100 }}%
+                            {% elif stat in statbox_5_stats %}
+                                {{ (first_nba_match[stat] / statbox_5) * 100 }}%
                             {% else %}
-                                {{ (nba_player_stats[stat] / max_non_percentage) * 100 }}%
+                                {{ (first_nba_match[stat] / statbox_15) * 100 }}%
                             {% endif %};"></div>
                 </div>
-                <span>{{ nba_player_stats[stat] }}</span>
+                <span>{{ first_nba_match[stat] }}</span>
             </div>
             {% endfor %}
         </div>
