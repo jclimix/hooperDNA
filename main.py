@@ -474,16 +474,21 @@ def home():
 
     nba_player_position = first_nba_match["Pos"].iloc[0]
     dna_match_percentage = first_nba_match["Similarity (%)"].iloc[0]
+    nba_match_player_year = first_nba_match["Season"].iloc[0]
 
     dna_match_percentage = dna_match_percentage[:-1]
     dna_match_percentage = float(dna_match_percentage)
 
+    college_player_year = latest_stats['Season']
+
     print("NBA Player Match Name: " + nba_match_player_name)
+    print("NBA Player Match Season: " + nba_match_player_year)
     print("NBA Player Link: " + str(nba_image_link))
     print("NBA Player Height: " + (nba_player_height))
     print("NBA Player Position: " + (nba_player_position))
     print("DNA Match: " + str(dna_match_percentage))
     print("College Player Name: " + college_player_name)
+    print("College Player Year: " + college_player_year)
     print("College Player Height: " + (college_player_height))
     print("College Player Position: " + (college_player_position))
     print("College Player Link: " + str(college_image_link))
@@ -553,7 +558,9 @@ def home():
         statbox_27_stats=statbox_27_stats,
         statbox_15_stats=statbox_15_stats,
         statbox_5_stats=statbox_5_stats,
-        max_percentage=max_percentage
+        max_percentage=max_percentage,
+        nba_match_player_year=nba_match_player_year,
+        college_player_year=college_player_year
     )
 
 

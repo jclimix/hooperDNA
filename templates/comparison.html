@@ -146,7 +146,7 @@
     <div class="image-container">
         <div>
             <p>College Player</p> <!-- Text above the college player image -->
-            <h2>{{ college_player_name }}</h2> <!-- Text above the college player image -->
+            <h2>{{ college_player_name }}<br>({{ college_player_year }})</h2> <!-- Text above the college player image -->
             <img src="{{ college_image_link }}" alt="Image 1">
             <p>Position: {{ college_player_position }}</p> <!-- Text below the college player image -->
             <p>Height: {{ college_player_height }}</p> <!-- Text below the college player image -->
@@ -172,7 +172,7 @@
     
         <div>
             <p>NBA Player</p> <!-- Text above the NBA player image -->
-            <h2>{{ nba_match_player_name }}</h2> <!-- Text above the NBA player image -->
+            <h2>{{ nba_match_player_name }}<br>({{ nba_match_player_year }})</h2> <!-- Text above the NBA player image -->
             <img src="{{ nba_image_link }}" alt="Image 2">
             <p>Position: {{ nba_player_position }}</p> <!-- Text below the college player image -->
             <p>Height: {{ nba_player_height }}</p> <!-- Text below the college player image -->
