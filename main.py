@@ -45,6 +45,12 @@ def home():
     def df_to_dict(df):
 
         return {col: df[col].values[0] for col in df.columns}
+    
+    def shift_df_col(df, col, pos):
+        column_to_move = df.pop(col)
+        df.insert(pos, col, column_to_move)
+
+        return df
 
     def shift_dict_key(d, key, new_position):
         """
@@ -448,7 +454,7 @@ def home():
 
     first_nba_match = extract_first_row(nba_dna_matches)
 
-    print(f"\nBest NBA Player Matches")
+    print(f"\nBest NBA Player Match:")
     print(first_nba_match)
 
     print(f"\n{college_player_name}'s NBA Player Matches (In Last Decade):")
@@ -480,6 +486,30 @@ def home():
     dna_match_percentage = float(dna_match_percentage)
 
     college_player_year = latest_stats['Season']
+
+    latest_stats_df = pd.DataFrame([latest_stats], columns=college_player_stats_df.columns)
+
+    college_stats_to_merge = latest_stats_df.head(1)
+    nba_stats_to_merge = first_nba_match.head(1)
+
+    print("College Row: ")
+    print(latest_stats_df)
+    print("NBA Row: ")
+    print(nba_stats_to_merge)
+    comparison_df = pd.concat([college_stats_to_merge, nba_stats_to_merge], ignore_index=True)
+
+    print("Comparison DF: ")
+    print(comparison_df)
+
+    comparison_df = remove_column(comparison_df, "Similarity (%)")
+    comparison_df = remove_column(comparison_df, "G")
+    comparison_df = remove_column(comparison_df, "GS")
+    comparison_df = remove_column(comparison_df, "Age")
+
+    comparison_df.at[0, 'Player'] = college_player_name
+
+    comparison_df = shift_df_col(comparison_df, 'Player', 1)
+    comparison_df = shift_df_col(comparison_df, 'PTS', 7)
 
     print("NBA Player Match Name: " + nba_match_player_name)
     print("NBA Player Match Season: " + nba_match_player_year)
@@ -535,6 +565,8 @@ def home():
     print(college_player)
     print(first_nba_match)
 
+    comparison_df = comparison_df.to_html(index=False)
+
     # Send data to comparison.html template
     return render_template(
         "comparison.html",
@@ -560,7 +592,8 @@ def home():
         statbox_5_stats=statbox_5_stats,
         max_percentage=max_percentage,
         nba_match_player_year=nba_match_player_year,
-        college_player_year=college_player_year
+        college_player_year=college_player_year,
+        comparison_df=comparison_df
     )
 
 
