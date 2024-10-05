@@ -148,7 +148,7 @@ def home():
 
         return img_link, height
 
-    selected_college_player = "Caitlin Clark"
+    selected_college_player = "Zyon Pullin"
 
     csv_file_path = "./sample_DB/college_data/college_basketball_players.csv"
 
