@@ -36,15 +36,20 @@ def generate_json_from_csv():
 def home():
     return render_template('index.html')
         
-@app.route('/submit', methods=['GET', 'POST'])
+@app.route('/submit', methods=['POST'])
 def submit():
 
     if request.method == 'GET':
         print('see ya back home spiderman')
         return redirect(url_for('home'))
-
+    
+    print("i always get them...eventually")
     player_id = request.form.get('player_id')
     selected_profile = request.form.get('selected_profile')
+    if not player_id or not selected_profile:
+        # Return an error or redirect back to the homepage with a message
+        print('Missing player ID or profile selection. Redirecting to homepage.')
+        return redirect(url_for('home'))
 
     return redirect(url_for('results', player_id=player_id, selected_profile=selected_profile))
         
