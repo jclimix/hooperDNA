@@ -5,9 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Comparison</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet">
+
     <style>
 
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap'); /* Importing custom font */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap');
 
         .container {
             display: flex;
@@ -20,213 +24,366 @@
         .comparison-chart {
             display: flex;
             flex-direction: column;
-            align-items: center; /* Center items vertically */
-            justify-content: center; /* Center items horizontally */
-            font-family: Roboto, sans-serif;
+            align-items: center;
+            font-family: 'Roboto', sans-serif;
         }
 
         .stat-row {
             display: flex;
             align-items: center;
             margin: 5px 0;
+            color: #e6e6e6;
         }
 
         .stat-bar {
-            width: 150px;
+            width: 200px;
             height: 20px;
-            background-color: lightgray;
+            background-color: rgb(255, 249, 249);
             margin: 0 10px;
             position: relative;
-            border-radius: 10px;
+            border-radius: 5px;
         }
 
         .bar-inner {
             height: 100%;
             position: absolute;
             top: 0;
-            border-radius: 10px;
+            border-radius: 5px;
         }
 
         .bar-inner.blue {
-            background-color: #4A90E2;
+            background-color: #62a8ff;
         }
 
         .bar-inner.orange {
-            background-color: #F5A623;
+            background-color: #fabb56;
         }
 
         .stat-label {
             font-weight: bold;
         }
 
-        /* Add spacing between the images */
         .image-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 50px; /* Adjust the space between images */
+            gap: 38px;
             margin-bottom: 20px;
-            margin-left: 60px;
-        }
-        .college-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 50px; /* Adjust the space between images */
-            margin-bottom: 20px;
-            margin-left: 60px;
+            margin-left: 27px;
         }
 
         .image-container img {
-            max-width: 90px; /* Adjust image size as needed */
+            max-width: 90px;
             height: auto;
+            border: 3px solid #000000; /* Blue border */
+            border-radius: 10px;
         }
 
-        /* Circular percentage chart with modern design */
-        .circular-chart {
-            position: relative;
-            width: 100px; /* Smaller size */
-            height: 100px;
-            align-items: center; /* Center items vertically */
-            justify-content: center; /* Center items horizontally */
+        /* Progress Bar Styles */
+        .progress-container {
+            width: 28%;
+            margin: 20px auto;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            height: 35px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
         }
 
-        .circle {
-            fill: none;
-            stroke-width: 6; /* Thinner ring for a more modern look */
-            stroke-linecap: round;
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
+        .progress-bar {
+            height: 100%;
+            background-color: #1c1c1c;
+            border-radius: 5px;
+            width: 0;
+            transition: width 1s ease-out;
         }
 
-        .circle-background {
-            stroke: #f0f0f0; /* Soft light grey for background */
-        }
-
-        .circle-foreground {
-            stroke: #3498db; /* Modern blue color */
-            stroke-dasharray: 282; /* Updated for smaller circle (circumference = 2 * π * r where r = 45) */
-            stroke-dashoffset: 282;
-            transition: stroke-dashoffset 1s ease-out;
-        }
-
-        /* Modern percentage text */
-        .percentage-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 24px; /* Smaller text for modern look */
+        .progress-percentage {
+            text-align: center;
+            color: #fff;
+            font-size: 20px;
             font-weight: bold;
-            color: #3498db; /* Matches the foreground color */
-            font-family: 'Roboto', sans-serif; /* Sleek, sans-serif font */
-            letter-spacing: 1px; /* Modern spacing between characters */
+            line-height: 35px;
+            font-family: 'Archivo Black', sans-serif;
         }
 
-        /* Optional: subtle shadow for a modern, flat look */
-        .circular-chart {
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-            border-radius: 50%;
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            max-width: 200px;
+            height: auto;
         }
 
         h1 {
             text-align: center;
-            font-family: 'Arial', sans-serif;
-            font-size: 36px;
-            color: #333; /* Custom color */
-            margin-bottom: 20px; /* Spacing between h1 and chart */
+            font-family: 'Oswald', sans-serif;
+            font-size: 21px;
+            color: #ffffff;
+            margin-bottom: -20px;
         }
+
         h2 {
             text-align: center;
-            font-family: 'Arial', sans-serif;
-            font-size: 24px;
-            color: #333; /* Custom color */
-            margin-bottom: 20px; /* Spacing between h1 and chart */
+            font-family: 'Oswald', sans-serif;
+            font-size: 27px;
+            color: #f5f5f5;
+            margin-bottom: 30px;
         }
-        body {
+
+        h3 {
+            text-align: center;
+            text-transform: uppercase;
+            font-family: 'Oswald', sans-serif;
+            font-size: 45px;
+            color: #fcfcfc;
+        }
+
+        h4 {
+            text-align: center;
+            text-transform: uppercase;
+            font-family: 'Oswald', sans-serif;
+            font-size: 54px;
+            color: #fafafa;
+            margin-bottom: 20px;
+        }
+
+        h5 {
+            color: #f1f1f1;
             font-family: 'Roboto', sans-serif;
+            font-size: 20px;
+            align-items: center;
+            justify-content: center;
         }
+
+        body {
+            background-image: url('https://i.ibb.co/Xpfm776/collegemashblue.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat; 
+            
+        }
+
+        p {
+            color: #f1f1f1;
+            font-family: 'Roboto', sans-serif;
+            font-size: 20px;
+        }
+
         table {
-            border-collapse: collapse;
-            max-width: 200px; /* Maximum width of the table */
-            width: 50%; /* Take full width of the container */
-            margin: 0 auto; /* Center the table */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            overflow: hidden; /* Ensures rounded corners on the table */
+            border-collapse: separate; /* Separate borders for modern look */
+            border-spacing: 0; /* No spacing between table cells */
+            max-width: 100px; /* Increased max-width for more content */
+            width: 80%; /* 80% of the container width */
+            margin: 20px auto; /* Center the table with some margin */
+            border-radius: 10px; /* Smooth rounded corners */
+            overflow: hidden;
+            background-color: #fff; /* White background */
         }
 
         th, td {
-            padding: 2px 5px;
+            padding: 6px 8px; /* Increased padding for better spacing */
             text-align: left;
             background-color: #fff;
             color: #333;
+            font-family: 'Roboto', sans-serif;
+            font-size: 12px; /* Font size for a cleaner look */
         }
 
         th {
-            background-color: #2f94ff; /* Primary color */
-            color: white;
+            background-color: #19212a; /* Accent header color */
+            color: #fff; /* White text for contrast */
             font-weight: bold;
+            text-transform: uppercase; /* Uppercase for modern feel */
+            font-size: 12px;
+            letter-spacing: 0.5px; /* Spacing for a clean look */
         }
 
         tr:nth-child(even) {
-            background-color: #f9f9f9; /* Light grey for even rows */
+            background-color: #f9f9f9; /* Lighter background for alternating rows */
         }
 
-        tr:hover {
-            background-color: #f1f1f1; /* Light grey on hover */
-        }
 
-        /* Responsive design for smaller screens */
-        @media screen and (max-width: 500px) {
-            th, td {
-                padding: 8px 10px;
+        @media screen and (max-width: 768px) {
+            .hide-on-mobile {
+                display: none 
+            }
+            .image-container img {
+                max-width: 90px;
+                height: auto;
+                border: 2px solid #000000; /* Blue border */
+                border-radius: 10px;
+            }
+            .progress-container {
+                width: 60%;
+                margin: 20px auto;
+                background-color: #fefdfd;
+                border-radius: 5px;
+                height: 30px;
+                overflow: hidden;
+            }
+
+            .progress-bar {
+                height: 100%;
+                background-color: #222222;
+                border-radius: 5px;
+                width: 0;
+                transition: width 1s ease-out;
+            }
+            .progress-percentage {
+                text-align: center;
+                color: #fff;
+                font-size: 15px;
+                font-weight: bold;
+                line-height: 30px;
+                font-family: 'Archivo Black', sans-serif;
+            }
+            .container {
+                width: 40%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 60vh;
+                margin-top: 0px;
+                margin-left: 120px;
+            }
+
+            .comparison-chart {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                font-family: 'Roboto', sans-serif;
+            }
+
+            .stat-row {
+                display: flex;
+                align-items: center;
+                margin: 5px 0;
+                color: #ffffff;
+            }
+
+            .stat-bar {
+                width: 80px;
+                height: 20px;
+                background-color: rgb(255, 249, 249);
+                margin: 0 10px;
+                position: relative;
+                border-radius: 5px;
+            }
+
+            .bar-inner {
+                height: 100%;
+                position: absolute;
+                top: 0;
+                border-radius: 5px;
+            }
+
+            .bar-inner.blue {
+                background-color: #62a8ff;
+            }
+
+            .bar-inner.orange {
+                background-color: #fabb56;
+            }
+
+            .stat-label {
+                font-weight: bold;
             }
 
             h1 {
-                font-size: 24px;
+                text-align: center;
+                font-family: 'Oswald', sans-serif;
+                font-size: 21px;
+                color: #ffffff;
+                margin-bottom: -20px;
+            }
+
+            h2 {
+                text-align: center;
+                font-family: 'Oswald', sans-serif;
+                font-size: 21px;
+                color: #f5f5f5;
+                margin-bottom: 30px;
+            }
+
+            h3 {
+                text-align: center;
+                text-transform: uppercase;
+                font-family: 'Oswald', sans-serif;
+                font-size: 40px;
+                color: #fcfcfc;
+            }
+
+            h4 {
+                text-align: center;
+                text-transform: uppercase;
+                font-family: 'Oswald', sans-serif;
+                font-size: 45px;
+                color: #fafafa;
+                margin-bottom: 20px;
+            }
+
+            h5 {
+                color: #f1f1f1;
+                font-family: 'Roboto', sans-serif;
+                font-size: 20px;
+                align-items: center;
+                justify-content: center;
+            }
+
+            body {
+                background-image: url('https://i.ibb.co/Xpfm776/collegemashblue.png');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat; 
+                
+            }
+
+            p {
+                color: #f1f1f1;
+                font-family: 'Roboto', sans-serif;
+                font-size: 15px;
             }
         }
     </style>
 </head>
 
 <body>
-    <h1>HooperDNA</h1>
+    <div class="logo-container">
+        <img src="https://i.ibb.co/3SvXSwQ/Hooper-DNA-1-removebg.png" alt="Hooper-DNA-logo" border="0">
+    </div>
+
     <div class="image-container">
-        <div>
-            <p>College</p> <!-- Text above the college player image -->
-            <h2>{{ college_player_name }}<br>({{ college_player_year }})</h2> <!-- Text above the college player image -->
-            <img src="{{ college_image_link }}" alt="Image 1">
-            <p>Position: {{ college_player_position }}</p> <!-- Text below the college player image -->
-            <p>Height: {{ college_player_height }}</p> <!-- Text below the college player image -->
+        <div style="text-align: center;">
+            <h2>{{ college_player_name }}<br>({{ college_player_year }})</h2>
+            <img src="{{ college_image_link }}" alt="college_player">
+            <p>Position: {{ college_player_position }}</p>
+            <p>Height: {{ college_player_height }}</p>
         </div>
-    
-        <!-- Modern Circular Percentage Chart -->
-        <div class="circular-chart">
-            <svg viewBox="0 0 100 100">
-                <!-- Background Circle -->
-                <circle class="circle circle-background" cx="50" cy="50" r="45"></circle>
-                
-                <!-- Foreground Circle that fills based on percentage -->
-                <circle class="circle circle-foreground" cx="50" cy="50" r="45"
-                    style="stroke-dashoffset: calc(282 - (282 * {{ dna_match_percentage }} / 100));"></circle>
-        
-                <!-- Percentage Text in the Center with Custom Font -->
-                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-size="18px" fill="#3498db"
-                    style="font-family: 'Roboto', sans-serif;">
-                    {{ dna_match_percentage }}%
-                </text>
-            </svg>
-        </div>
-    
-        <div>
-            <p>NBA</p> <!-- Text above the NBA player image -->
-            <h2>{{ nba_match_player_name }}<br>({{ nba_match_player_year }})</h2> <!-- Text above the NBA player image -->
-            <img src="{{ nba_image_link }}" alt="Image 2">
-            <p>Position: {{ nba_player_position }}</p> <!-- Text below the college player image -->
-            <p>Height: {{ nba_player_height }}</p> <!-- Text below the college player image -->
+
+        <div style="text-align: center;">
+            <h2>{{ nba_match_player_name }}<br>({{ nba_match_player_year }})</h2>
+            <img src="{{ nba_image_link }}" alt="nba_player">
+            <p>Position: {{ nba_player_position }}</p>
+            <p >Height: {{ nba_player_height }}</p>
         </div>
     </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" style="width: {{ dna_match_percentage }}%;">
+            <div class="progress-percentage">{{ dna_match_percentage }}% MATCH</div>
+        </div>
+    </div>
+
+    <br><br>
+
+    <h1>Match Profile:</h1>
+    <h3>{{ selected_profile }}</h3>
 
     <div class="container">
         <div class="comparison-chart">
@@ -235,47 +392,57 @@
                 <span>{{ college_player[stat] }}</span>
                 <div class="stat-bar">
                     <div class="bar-inner blue" style="width: 
-                            {% if stat in percentage_stats %}
-                                {{ (college_player[stat] / max_percentage) * 100 }}%
-                            {% elif stat in statbox_42_stats %}
-                                {{ (college_player[stat] / statbox_42) * 100 }}%
-                            {% elif stat in statbox_27_stats %}
-                                {{ (college_player[stat] / statbox_27) * 100 }}%
-                            {% elif stat in statbox_15_stats %}
-                                {{ (college_player[stat] / statbox_15) * 100 }}%
-                            {% elif stat in statbox_5_stats %}
-                                {{ (college_player[stat] / statbox_5) * 100 }}%
-                            {% else %}
-                                {{ (college_player[stat] / statbox_15) * 100 }}%
-                            {% endif %};"></div>
+                        {% if stat in percentage_stats %}
+                            {{ (college_player[stat] / max_percentage) * 100 }}%
+                        {% elif stat in statbox_42_stats %}
+                            {{ (college_player[stat] / statbox_42) * 100 }}%
+                        {% elif stat in statbox_27_stats %}
+                            {{ (college_player[stat] / statbox_27) * 100 }}%
+                        {% elif stat in statbox_15_stats %}
+                            {{ (college_player[stat] / statbox_15) * 100 }}%
+                        {% elif stat in statbox_5_stats %}
+                            {{ (college_player[stat] / statbox_5) * 100 }}%
+                        {% else %}
+                            {{ (college_player[stat] / statbox_15) * 100 }}%
+                        {% endif %};"></div>
                 </div>
                 <span class="stat-label">{{ stat.upper() }}</span>
                 <div class="stat-bar">
                     <div class="bar-inner orange" style="width: 
-                            {% if stat in percentage_stats %}
-                                {{ (first_nba_match[stat] / max_percentage) * 100 }}%
-                            {% elif stat in statbox_42_stats %}
-                                {{ (first_nba_match[stat] / statbox_42) * 100 }}%
-                            {% elif stat in statbox_27_stats %}
-                                {{ (first_nba_match[stat] / statbox_27) * 100 }}%
-                            {% elif stat in statbox_15_stats %}
-                                {{ (first_nba_match[stat] / statbox_15) * 100 }}%
-                            {% elif stat in statbox_5_stats %}
-                                {{ (first_nba_match[stat] / statbox_5) * 100 }}%
-                            {% else %}
-                                {{ (first_nba_match[stat] / statbox_15) * 100 }}%
-                            {% endif %};"></div>
+                        {% if stat in percentage_stats %}
+                            {{ (first_nba_match[stat] / max_percentage) * 100 }}%
+                        {% elif stat in statbox_42_stats %}
+                            {{ (first_nba_match[stat] / statbox_42) * 100 }}%
+                        {% elif stat in statbox_27_stats %}
+                            {{ (first_nba_match[stat] / statbox_27) * 100 }}%
+                        {% elif stat in statbox_15_stats %}
+                            {{ (first_nba_match[stat] / statbox_15) * 100 }}%
+                        {% elif stat in statbox_5_stats %}
+                            {{ (first_nba_match[stat] / statbox_5) * 100 }}%
+                        {% else %}
+                            {{ (first_nba_match[stat] / statbox_15) * 100 }}%
+                        {% endif %};"></div>
                 </div>
                 <span>{{ first_nba_match[stat] }}</span>
             </div>
             {% endfor %}
         </div>
     </div>
-
-    {{ comparison_df|safe }}
-
     <br><br>
 
+
+    <div class="hide-on-mobile">
+        <h4>Top Match Comparison</h4>
+        {{ comparison_df|safe }}
+
+        <br><br>
+
+        <h4>Top Matches</h4>
+        {{ nba_dna_matches|safe }}
+
+        <br><br>
+        <br><br>
+    </div>
 
 </body>
 

@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
 import duckdb
 import pandas as pd
 from scipy.spatial.distance import euclidean
@@ -148,7 +148,7 @@ def home():
 
         return img_link, height
 
-    selected_college_player = "Zyon Pullin"
+    selected_college_player = "Demarcus Sharp"
 
     csv_file_path = "./sample_DB/college_data/college_basketball_players.csv"
 
@@ -350,22 +350,17 @@ def home():
                 # print(f"Image {index} link: {college_image_link}")
             else:
                 print(f"Image {index}: No image found.")
+                college_image_link = "https://i.ibb.co/vqkzb0m/temp-player-pic.png"
+
     else:
         print(f"No media items found in the section with id '{target_id}'.")
+        college_image_link = "https://i.ibb.co/vqkzb0m/temp-player-pic.png"
 
     college_stats = np.array(
-        [college_player[stat] * weights[stat] for stat in college_player.keys()]
+        [float(college_player[stat]) * weights[stat] for stat in college_player.keys()]
     ).reshape(1, -1)
 
     print("\nCustom Match Profile: " + str(selected_profile))
-
-    print("\nCollege to NBA Conversion:")
-    print(
-        "MP: "
-        + str(round(college_player["MP"], 2))
-        + " | PTS: "
-        + str(round(college_player["PTS"], 2))
-    )
 
     results = []
     dir = "./sample_DB/nba_raw_data"
@@ -537,6 +532,9 @@ def home():
     statbox_15_stats = ["AST", "TRB", "ORB", "DRB"]
     statbox_5_stats = ["TOV", "PF", "STL", "BLK"]
 
+    for key in college_player:
+        college_player[key] = float(college_player[key])
+
     college_player = round_dict_values(college_player)
     first_nba_match = first_nba_match.round(2)
 
@@ -566,6 +564,7 @@ def home():
     print(first_nba_match)
 
     comparison_df = comparison_df.to_html(index=False)
+    nba_dna_matches = nba_dna_matches.to_html(index=False)
 
     # Send data to comparison.html template
     return render_template(
@@ -593,7 +592,9 @@ def home():
         max_percentage=max_percentage,
         nba_match_player_year=nba_match_player_year,
         college_player_year=college_player_year,
-        comparison_df=comparison_df
+        comparison_df=comparison_df,
+        selected_profile=selected_profile,
+        nba_dna_matches=nba_dna_matches
     )
 
 

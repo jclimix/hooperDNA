@@ -4,6 +4,7 @@ import pandas as pd
 import re
 import string
 import time
+from unidecode import unidecode  # Import unidecode to handle accented characters
 
 # Base URL for the player listings (for last names starting with a given letter)
 base_url = 'https://www.basketball-reference.com/players/{}/'
@@ -38,8 +39,8 @@ for letter in string.ascii_lowercase:
         player_links = soup.find_all('a', href=re.compile(r'^/players/.*\.html$'))
 
         for link in player_links:
-            # Get the player name and ID
-            player_name = link.text.strip()
+            # Get the player name and convert accented characters to unaccented ones
+            player_name = unidecode(link.text.strip())
             if player_name and player_name != 'Players':
                 player_id = link['href'].split('/')[-1].replace('.html', '')
                 player_data.append({'playerName': player_name, 'playerId': player_id})
