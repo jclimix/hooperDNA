@@ -9,11 +9,22 @@ from bs4 import BeautifulSoup
 import re
 import csv
 import json
+from dotenv import load_dotenv
+import os, logging, boto3, pandas as pd, io
 
 app = Flask(__name__)
 
+load_dotenv()
+logging.basicConfig(level=logging.INFO)
+
+# Initialize S3 client using environment variables
+s3 = boto3.client('s3', region_name=os.getenv('AWS_REGION'))
+
 def generate_json_from_csv():
-    csv_file = "./sample_DB/college_data/college_basketball_players.csv"  # Replace with your actual CSV file
+
+    # Read the CSV file from S3 and print the first two rows
+    obj = s3.get_object(Bucket='hooperdna-storage', Key='college_data/college_basketball_players.csv')
+    csv_file = pd.read_csv(io.BytesIO(obj['Body'].read()))  # Use io.BytesIO to read the content from S3
     json_file = './static/players.json'
 
     # Ensure the static directory exists
@@ -195,14 +206,13 @@ def results():
 
             return img_link, height
 
-        selected_college_player = "Demarcus Sharp"
+        # selected_college_player = "Demarcus Sharp"
 
-        csv_file_path = "./sample_DB/college_data/college_basketball_players.csv"
+        obj = s3.get_object(Bucket='hooperdna-storage', Key='college_data/college_basketball_players.csv')
+        df = pd.read_csv(io.BytesIO(obj['Body'].read()))
 
         # college_player_id = get_player_id(selected_college_player, csv_file_path)
         college_player_id = player_id
-
-        df = pd.read_csv(csv_file_path)
 
         row = df[df["playerId"] == college_player_id]
 
@@ -410,15 +420,15 @@ def results():
         print("\nCustom Match Profile: " + str(selected_profile))
 
         results = []
-        dir = "./sample_DB/nba_raw_data"
-
+        
         # 2015 to 2024
         for year in range(2015, 2025):
-            csv_file = os.path.join(dir, f"{year}_NBAPlayerStats_HprDNA_raw.csv")
+            obj = s3.get_object(Bucket='hooperdna-storage', Key=f'nba_raw_data/{year}_NBAPlayerStats_HprDNA_raw.csv')
+            csv_file = pd.read_csv(io.BytesIO(obj['Body'].read()))  # Use io.BytesIO to read the content from S3
 
-            if os.path.exists(csv_file):
+            if not csv_file.empty:
                 # query = f"SELECT * FROM '{csv_file}'"
-                season_data = pd.read_csv(csv_file)
+                season_data = csv_file
 
                 stat_columns = list(college_player.keys())
 
@@ -473,10 +483,10 @@ def results():
                         )
                 else:
                     print(
-                        f"One or more columns from {stat_columns} are missing in {csv_file}."
+                        f"One or more columns from {stat_columns} are missing in CSV file."
                     )
             else:
-                print(f"File not found: {csv_file}")
+                print(f"File not found.")
 
         nba_dna_matches = pd.concat(results, ignore_index=True)
 
@@ -505,8 +515,8 @@ def results():
         nba_match_player_name = first_nba_match["Player"].iloc[0]
 
         def find_nba_player_id(player_name, csv_file):
-            csv_file = "./sample_DB/nba_player_data/nba_players_n_ids.csv"
-            df = pd.read_csv(csv_file)
+            obj = s3.get_object(Bucket='hooperdna-storage', Key=f'nba_player_data/nba_players_n_ids.csv')
+            df = pd.read_csv(io.BytesIO(obj['Body'].read()))  # Use io.BytesIO to read the content from S3
 
             player_row = df[df["playerName"].str.lower() == player_name.lower()]
             player_id = player_row["playerId"].values[0]
