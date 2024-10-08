@@ -1,2 +1,3 @@
 # Ignore all .log files
 Docs.md
+.env
