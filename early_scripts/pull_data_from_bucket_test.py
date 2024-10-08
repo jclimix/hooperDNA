@@ -55,4 +55,4 @@ def read_csv_from_s3_with_pandas(bucket_name, object_name):
 # Replace 'your-bucket-name' with your actual S3 bucket name
 # Replace 's3-object-name.csv' with the name of the file in the S3 bucket
 
-read_csv_from_s3_with_pandas('hooperdna-storage', 'college_basketball_players.csv')
+read_csv_from_s3_with_pandas('hooperdna-storage', 'nba_clean_data/2021_NBAPlayerStats_HprDNA_cln.csv')
