@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
-import duckdb
 import pandas as pd
 from scipy.spatial.distance import euclidean
 import numpy as np
@@ -17,20 +16,144 @@ app = Flask(__name__)
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
-# Initialize S3 client using environment variables
 s3 = boto3.client('s3', region_name=os.getenv('AWS_REGION'))
+
+def move_column(df, column_name, new_position):
+    column = df.pop(column_name)
+
+    df.insert(new_position, column_name, column)
+
+    return df
+
+def remove_column(df, column_name):
+    df = df.drop(columns=[column_name])
+
+    return df
+
+def extract_first_row(df):
+    new_df = df.iloc[[0]].reset_index(drop=True)
+
+    return new_df
+
+def round_dict_values(input_dict):
+    rounded_dict = {}
+    for key, value in input_dict.items():
+
+        if isinstance(value, (int, float)):
+            rounded_dict[key] = round(value, 2)
+        else:
+            rounded_dict[key] = value
+    return rounded_dict
+
+def df_to_dict(df):
+
+    return {col: df[col].values[0] for col in df.columns}
+
+def shift_df_col(df, col, pos):
+    column_to_move = df.pop(col)
+    df.insert(pos, col, column_to_move)
+
+    return df
+
+def shift_dict_key(d, key, new_position):
+    """
+    Shifts the position of a key-value pair in a dictionary to a new position.
+
+    Parameters:
+    d (dict): The original dictionary.
+    key (str): The key to be moved.
+    new_position (int): The new position for the key (0-based index).
+
+    Returns:
+    dict: A new dictionary with the key-value pair moved to the new position.
+    """
+    if key not in d:
+        raise KeyError(f"Key '{key}' not found in dictionary.")
+
+    key_value_pair = {key: d.pop(key)}
+
+    items = list(d.items())
+
+    items.insert(new_position, list(key_value_pair.items())[0])
+
+    return dict(items)
+
+def get_player_id(player_name, csv_file):
+    df = pd.read_csv(csv_file)
+
+    matching_players = df[df["playerName"].str.lower() == player_name.lower()]
+
+    if not matching_players.empty:
+        player_id = matching_players.iloc[-1]["playerId"]
+        return player_id
+    else:
+        return None
+
+def scrape_nba_player_data(url):
+    target_id = "meta"
+    img_link = None
+    height = None
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        target_section = soup.find(id=target_id)
+
+        if not target_section:
+            print(f"No section found with id '{target_id}'.")
+        else:
+            media_items = target_section.find_all("div", class_="media-item")
+
+            if media_items:
+                for index, item in enumerate(media_items, 1):
+                    img_tag = item.find("img")
+                    if img_tag and "src" in img_tag.attrs:
+                        img_link = img_tag["src"]
+                        break
+                    else:
+                        print(f"Image {index}: No image found.")
+            else:
+                print(f"No media items found in the section with id '{target_id}'.")
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error while scraping the webpage: {e}")
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        height_pattern = re.compile(r"([4-8]-\d{1,2})")
+
+        height_element = soup.find("p", string=height_pattern)
+
+        if height_element:
+
+            height_match = height_pattern.search(height_element.text)
+            if height_match:
+                height = height_match.group(0)
+            else:
+                print("Height not found.")
+        else:
+            print("Height element not found.")
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error while scraping the webpage: {e}")
+
+    return img_link, height
 
 def generate_json_from_csv():
 
-    # Read the CSV file from S3 and print the first two rows
     obj = s3.get_object(Bucket='hooperdna-storage', Key='college_data/college_basketball_players.csv')
-    csv_file = pd.read_csv(io.BytesIO(obj['Body'].read()))  # Use io.BytesIO to read the content from S3
+    csv_file = pd.read_csv(io.BytesIO(obj['Body'].read())) 
     json_file = './static/players.json'
 
-    # Ensure the static directory exists
     os.makedirs(os.path.dirname(json_file), exist_ok=True)
 
-    # If the JSON file doesn't exist, generate it
     if not os.path.exists(json_file):
         data = []
         with open(csv_file, mode='r') as file:
@@ -38,11 +161,9 @@ def generate_json_from_csv():
             for row in reader:
                 data.append({'name': row['playerName'], 'id': row['playerId']})
         
-        # Save JSON file to the static folder
         with open(json_file, mode='w') as file:
             json.dump(data, file)
 
-# Homepage route
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -58,7 +179,7 @@ def submit():
     player_id = request.form.get('player_id')
     selected_profile = request.form.get('selected_profile')
     if not player_id or not selected_profile:
-        # Return an error or redirect back to the homepage with a message
+
         print('Missing player ID or profile selection. Redirecting to homepage.')
         return redirect(url_for('home'))
 
@@ -67,244 +188,38 @@ def submit():
 @app.route('/results')
 def results():
         
-        player_id = request.args.get('player_id')
+        college_player_id = request.args.get('player_id')
         selected_profile = request.args.get('selected_profile')
 
-        print(player_id)
+        # debugging
+        print(college_player_id)
         print(selected_profile)
-
-        def move_column(df, column_name, new_position):
-            column = df.pop(column_name)
-
-            df.insert(new_position, column_name, column)
-
-            return df
-
-        def remove_column(df, column_name):
-            df = df.drop(columns=[column_name])
-
-            return df
-
-        def extract_first_row(df):
-            new_df = df.iloc[[0]].reset_index(drop=True)
-
-            return new_df
-
-        def round_dict_values(input_dict):
-            rounded_dict = {}
-            for key, value in input_dict.items():
-                # Check if the value is a number (int or float)
-                if isinstance(value, (int, float)):
-                    rounded_dict[key] = round(value, 2)
-                else:
-                    rounded_dict[key] = value  # Keep non-numeric values unchanged
-            return rounded_dict
-
-        def df_to_dict(df):
-
-            return {col: df[col].values[0] for col in df.columns}
-        
-        def shift_df_col(df, col, pos):
-            column_to_move = df.pop(col)
-            df.insert(pos, col, column_to_move)
-
-            return df
-
-        def shift_dict_key(d, key, new_position):
-            """
-            Shifts the position of a key-value pair in a dictionary to a new position.
-
-            Parameters:
-            d (dict): The original dictionary.
-            key (str): The key to be moved.
-            new_position (int): The new position for the key (0-based index).
-
-            Returns:
-            dict: A new dictionary with the key-value pair moved to the new position.
-            """
-            # Check if the key exists in the dictionary
-            if key not in d:
-                raise KeyError(f"Key '{key}' not found in dictionary.")
-
-            # Remove the key-value pair and store it
-            key_value_pair = {key: d.pop(key)}
-
-            # Convert the remaining dictionary into a list of key-value pairs (tuples)
-            items = list(d.items())
-
-            # Insert the key-value pair at the new position
-            items.insert(new_position, list(key_value_pair.items())[0])
-
-            # Convert the list back into a dictionary
-            return dict(items)
-
-        def get_player_id(player_name, csv_file):
-            df = pd.read_csv(csv_file)
-
-            matching_players = df[df["playerName"].str.lower() == player_name.lower()]
-
-            if not matching_players.empty:
-                player_id = matching_players.iloc[-1]["playerId"]
-                return player_id
-            else:
-                return None
-
-        def scrape_nba_player_data(url):
-            target_id = "meta"
-            img_link = None
-            height = None
-
-            try:
-                response = requests.get(url)
-                response.raise_for_status()
-
-                soup = BeautifulSoup(response.content, "html.parser")
-
-                target_section = soup.find(id=target_id)
-
-                if not target_section:
-                    print(f"No section found with id '{target_id}'.")
-                else:
-                    media_items = target_section.find_all("div", class_="media-item")
-
-                    if media_items:
-                        for index, item in enumerate(media_items, 1):
-                            img_tag = item.find("img")
-                            if img_tag and "src" in img_tag.attrs:
-                                img_link = img_tag["src"]
-                                break
-                            else:
-                                print(f"Image {index}: No image found.")
-                    else:
-                        print(f"No media items found in the section with id '{target_id}'.")
-
-            except requests.exceptions.RequestException as e:
-                print(f"Error while scraping the webpage: {e}")
-
-            try:
-                response = requests.get(url)
-                response.raise_for_status()
-
-                soup = BeautifulSoup(response.content, "html.parser")
-
-                height_pattern = re.compile(r"([4-8]-\d{1,2})")
-
-                height_element = soup.find("p", string=height_pattern)
-
-                if height_element:
-
-                    height_match = height_pattern.search(height_element.text)
-                    if height_match:
-                        height = height_match.group(0)
-                    else:
-                        print("Height not found.")
-                else:
-                    print("Height element not found.")
-
-            except requests.exceptions.RequestException as e:
-                print(f"Error while scraping the webpage: {e}")
-
-            return img_link, height
-
-        # selected_college_player = "Demarcus Sharp"
 
         obj = s3.get_object(Bucket='hooperdna-storage', Key='college_data/college_basketball_players.csv')
         df = pd.read_csv(io.BytesIO(obj['Body'].read()))
 
-        # college_player_id = get_player_id(selected_college_player, csv_file_path)
-        college_player_id = player_id
 
         row = df[df["playerId"] == college_player_id]
 
         if not row.empty:
             college_player_name = row["playerName"].values[0]
 
-        college_player = {
-            "MP": 0.0,  # Minutes per game
-            "FG": 0.0,  # Field Goals Made per game
-            "FGA": 0.0,  # Field Goals Attempted per game
-            "FG%": 0.0,  # Field Goal Percentage
-            "3P": 0.0,  # Three-Point Field Goals Made per game
-            "3PA": 0.0,  # Three-Point Field Goals Attempted per game
-            "3P%": 0.0,  # Three-Point Field Goals Attempted per game
-            "FT": 0.0,  # Free Throws Made per game
-            "FTA": 0.0,  # Free Throws Attempted per game
-            "FT%": 0.0,  # Free Throw Percentage
-            "ORB": 0.0,  # Offensive Rebounds per game
-            "DRB": 0.0,  # Defensive Rebounds per game
-            "TRB": 0.0,  # Total Rebounds per game
-            "AST": 0.0,  # Assists per game
-            "STL": 0.0,  # Steals per game
-            "BLK": 0.0,  # Blocks per game
-            "TOV": 0.0,  # Turnovers per game
-            "PF": 0.0,  # Personal Fouls per game
-            "PTS": 0.0,  # Points per game
-        }
+        college_player = {"MP": 0.0, "FG": 0.0, "FGA": 0.0, "FG%": 0.0, "3P": 0.0, "3PA": 0.0, 
+                        "3P%": 0.0, "FT": 0.0, "FTA": 0.0, "FT%": 0.0, "ORB": 0.0, "DRB": 0.0, 
+                        "TRB": 0.0, "AST": 0.0, "STL": 0.0, "BLK": 0.0, "TOV": 0.0, "PF": 0.0, "PTS": 0.0}
 
         weight_profiles = {
-            "offense": {
-                "MP": 6.0,
-                "FG": 7.0,
-                "FGA": 5.0,
-                "FG%": 6.0,
-                "3P": 9.0,
-                "3PA": 5.0,
-                "3P%": 8.0,
-                "FT": 4.0,
-                "FTA": 3.0,
-                "FT%": 7.0,
-                "ORB": 5.0,
-                "DRB": 2.0,
-                "TRB": 4.0,
-                "AST": 7.0,
-                "STL": 4.0,
-                "BLK": 4.0,
-                "TOV": 3.0,
-                "PF": 2.0,
-                "PTS": 8.0,
-            },
-            "defense": {
-                "MP": 6.0,
-                "FG": 4.0,
-                "FGA": 3.0,
-                "FG%": 5.0,
-                "3P": 4.0,
-                "3PA": 3.0,
-                "3P%": 4.0,
-                "FT": 4.0,
-                "FTA": 3.0,
-                "FT%": 4.0,
-                "ORB": 7.0,
-                "DRB": 8.0,
-                "TRB": 8.0,
-                "AST": 5.0,
-                "STL": 9.0,
-                "BLK": 9.0,
-                "TOV": 2.0,
-                "PF": 6.0,
-                "PTS": 4.0,
-            },
-            "balanced": {
-                "MP": 7.0,
-                "FG": 6.0,
-                "FGA": 6.0,
-                "FG%": 6.0,
-                "3P": 6.0,
-                "3PA": 6.0,
-                "3P%": 7.0,
-                "FT": 6.0,
-                "FTA": 6.0,
-                "FT%": 6.0,
-                "ORB": 6.0,
-                "DRB": 6.0,
-                "TRB": 6.0,
-                "AST": 6.0,
-                "STL": 6.0,
-                "BLK": 6.0,
-                "TOV": 4.0,
-                "PF": 5.0,
-                "PTS": 6.0,
-            },
+            "offense": {"MP": 6.0, "FG": 7.0, "FGA": 5.0, "FG%": 6.0, "3P": 9.0, "3PA": 5.0, "3P%": 8.0,
+                        "FT": 4.0, "FTA": 3.0, "FT%": 7.0, "ORB": 5.0, "DRB": 2.0, "TRB": 4.0, "AST": 7.0,
+                        "STL": 4.0, "BLK": 4.0, "TOV": 3.0, "PF": 2.0, "PTS": 8.0},
+            
+            "defense": {"MP": 6.0, "FG": 4.0, "FGA": 3.0, "FG%": 5.0, "3P": 4.0, "3PA": 3.0, "3P%": 4.0,
+                        "FT": 4.0, "FTA": 3.0, "FT%": 4.0, "ORB": 7.0, "DRB": 8.0, "TRB": 8.0, "AST": 5.0,
+                        "STL": 9.0, "BLK": 9.0, "TOV": 2.0, "PF": 6.0, "PTS": 4.0},
+            
+            "balanced": {"MP": 7.0, "FG": 6.0, "FGA": 6.0, "FG%": 6.0, "3P": 6.0, "3PA": 6.0, "3P%": 7.0,
+                        "FT": 6.0, "FTA": 6.0, "FT%": 6.0, "ORB": 6.0, "DRB": 6.0, "TRB": 6.0, "AST": 6.0,
+                        "STL": 6.0, "BLK": 6.0, "TOV": 4.0, "PF": 5.0, "PTS": 6.0}
         }
 
         raw_weights = weight_profiles[selected_profile]
@@ -378,7 +293,7 @@ def results():
 
         if height_element:
             college_player_height = height_element.text.strip()
-            # print(f"College player height: {college_player_height}")
+
         else:
             print("Height element not found.")
 
@@ -404,7 +319,7 @@ def results():
                 img_tag = item.find("img")
                 if img_tag and "src" in img_tag.attrs:
                     college_image_link = img_tag["src"]
-                    # print(f"Image {index} link: {college_image_link}")
+
                 else:
                     print(f"Image {index}: No image found.")
                     college_image_link = "https://i.ibb.co/vqkzb0m/temp-player-pic.png"
@@ -495,17 +410,15 @@ def results():
         ).reset_index(drop=True)
 
         nba_dna_matches = move_column(nba_dna_matches, "Similarity (%)", 1)
-
         nba_dna_matches = move_column(nba_dna_matches, "Player", 0)
-
         nba_dna_matches = remove_column(nba_dna_matches, "Rk")
         nba_dna_matches = remove_column(nba_dna_matches, "G")
         nba_dna_matches = remove_column(nba_dna_matches, "GS")
-
         nba_dna_matches = move_column(nba_dna_matches, "PTS", 7)
 
         first_nba_match = extract_first_row(nba_dna_matches)
 
+        # more debugging
         print(f"\nBest NBA Player Match:")
         print(first_nba_match)
 
@@ -575,14 +488,14 @@ def results():
         print("College Player Position: " + (college_player_position))
         print("College Player Link: " + str(college_image_link))
 
-        # Define the max values for percentage and non-percentage stats
-        statbox_42 = 42.0  # Set maximum value for non-percentage stats
-        statbox_27 = 27.0  # Set maximum value for non-percentage stats
-        statbox_15 = 15.0  # Set maximum value for non-percentage stats
-        statbox_5 = 5.0  # Set maximum value for non-percentage stats
-        max_percentage = 1  # Maximum for percentage stats
+        # Defining the max values for stats on results page for bar chart:
+        statbox_42 = 42.0  
+        statbox_27 = 27.0 
+        statbox_15 = 15.0 
+        statbox_5 = 5.0 
+        max_percentage = 1
 
-        # Define the percentage stats to distinguish between the two ranges
+        # Defining which stats belong to which ranges:
         percentage_stats = ["FG%", "eFG%", "2P%", "3P%", "FT%"]
         statbox_42_stats = ["PTS", "MP"]
         statbox_27_stats = ["FG", "FGA", "3P", "3PA", "FT", "FTA"]
