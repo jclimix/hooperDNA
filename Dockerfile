@@ -9,10 +9,14 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies for lxml
+# Install system dependencies for lxml and distutils for numpy
 RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libxslt1-dev \
+    python3-distutils \
+    python3-setuptools \
+    gcc \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pip requirements
