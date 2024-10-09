@@ -10,6 +10,7 @@ import csv
 import json
 from dotenv import load_dotenv
 import os, logging, boto3, pandas as pd, io
+from waitress import serve
 
 app = Flask(__name__)
 
@@ -569,4 +570,4 @@ def results():
         )
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    serve(app, host="0.0.0.0", port=8005)
