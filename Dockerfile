@@ -1,36 +1,20 @@
-# Use specific Python version 3.10.11
+# Use an official Python runtime as a parent image
 FROM python:3.10.11
 
-EXPOSE 8005
-
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
-
-# Turns off buffering for easier container logging
-ENV PYTHONUNBUFFERED=1
-
-# Install system dependencies for lxml and distutils for numpy
-RUN apt-get update && apt-get install -y \
-    libxml2-dev \
-    libxslt1-dev \
-    python3-distutils \
-    python3-setuptools \
-    gcc \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install pip requirements
-COPY requirements.txt .
-RUN python -m pip install --upgrade pip
-RUN python -m pip install -r requirements.txt
-
+# Set the working directory
 WORKDIR /app
+
+# Copy the current directory contents into the container at /app
 COPY . /app
 
-# Creates a non-root user with an explicit UID and adds permission to access the /app folder
-# For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
-RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
-USER appuser
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD ["gunicorn", "--bind", "0.0.0.0:8005", "app:app"]
+# Expose the port that the Flask app runs on
+EXPOSE 8005
+
+# Define environment variable
+ENV FLASK_APP=app.py
+
+# Run Gunicorn to serve the Flask app
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8005", "app:app"]
