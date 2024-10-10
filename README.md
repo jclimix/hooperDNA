@@ -2,17 +2,6 @@
 
 This web application scrapes player data from College Basketball and NBA sources (Sports Reference, Basketball Reference) and compares statistics between players. The app provides users with a simple interface to input player names or IDs, and it outputs a side-by-side comparison. Additionally, automated scripts running on Airflow ensure that the datasets stored on AWS S3 are continuously updated, providing users with the most current data. An API, built using Django, also allows for programmatic access to the comparison tool.
 
-## Table of Contents
-- [Features](#features)
-- [Technologies Used](#technologies-used)
-- [Setup and Installation](#setup-and-installation)
-- [Usage](#usage)
-- [Docker Instructions](#docker-instructions)
-- [Environment Variables](#environment-variables)
-- [Known Issues](#known-issues)
-- [Contributing](#contributing)
-- [License](#license)
-
 ## Features
 
 - Scrapes player data from Sports Reference and Basketball Reference.
