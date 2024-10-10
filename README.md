@@ -1,17 +1,17 @@
 # HooperDNA: College Basketball and NBA Player Comparison
 
-This web application scrapes player data from College Basketball and NBA sources (Sports Reference, Basketball Reference) and compares statistics between players. The app provides users with a simple interface to input player names or IDs, and it outputs a side-by-side comparison.
+This web application scrapes player data from College Basketball and NBA sources (Sports Reference, Basketball Reference) and compares statistics between players. The app provides users with a simple interface to input player names or IDs, and it outputs a side-by-side comparison. Additionally, automated scripts running on Airflow ensure that the datasets stored on AWS S3 are continuously updated, providing users with the most current data. An API, built using Django, also allows for programmatic access to the comparison tool.
 
 ## Table of Contents
-1. [Features](#features)
-2. [Technologies Used](#technologies-used)
-3. [Setup and Installation](#setup-and-installation)
-4. [Usage](#usage)
-5. [Docker Instructions](#docker-instructions)
-6. [Environment Variables](#environment-variables)
-7. [Known Issues](#known-issues)
-8. [Contributing](#contributing)
-9. [License](#license)
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Setup and Installation](#setup-and-installation)
+- [Usage](#usage)
+- [Docker Instructions](#docker-instructions)
+- [Environment Variables](#environment-variables)
+- [Known Issues](#known-issues)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Features
 
@@ -19,6 +19,8 @@ This web application scrapes player data from College Basketball and NBA sources
 - Compares College Basketball and NBA players' statistics.
 - Interactive web interface for user input and comparison.
 - Uses AWS S3 for data storage and retrieval.
+- Automated dataset updates hosted on Airflow.
+- Provides an API built with Django for programmatic access to the comparison tool.
 - Dockerized for easy deployment.
 
 ## Technologies Used
@@ -28,5 +30,7 @@ This web application scrapes player data from College Basketball and NBA sources
 - BeautifulSoup
 - Pandas
 - Boto3
-- Docker
 - AWS S3
+- Airflow (for automating data updates)
+- Django (for building the API)
+- Docker
