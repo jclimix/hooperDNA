@@ -52,6 +52,10 @@ def round_dict_values(input_dict):
             rounded_dict[key] = value
     return rounded_dict
 
+def csv_to_dict(csv_file):
+    df = pd.read_csv(csv_file)
+    return df.to_dict()
+
 def df_to_dict(df):
 
     return {col: df[col].values[0] for col in df.columns}
@@ -84,6 +88,15 @@ def get_player_id(player_name, csv_file):
         return player_id
     else:
         return None
+
+def csv_to_nested_dict(csv_file, key_column):
+    df = pd.read_csv(csv_file)
+    nested_dict = {}
+    for _, row in df.iterrows():
+        key = row[key_column]
+        nested_dict[key] = row.drop(key_column).to_dict()
+    return nested_dict
+
 
 def scrape_nba_player_data(nba_match_player_name):
 

@@ -11,13 +11,18 @@ from utils import (
     df_to_dict, 
     shift_df_col, 
     shift_dict_key, 
-    get_player_id, 
+    get_player_id,
+    csv_to_dict,
+    csv_to_nested_dict, 
     scrape_nba_player_data, 
     generate_json_from_csv, 
     scrape_college_player_data, 
     find_nba_matches, 
     compile_html_data
 )
+
+college_player_csv = './csv_files/college_player.csv'
+weight_profiles_csv = './csv_files/weight_profiles.csv'
 
 app = Flask(__name__)
 
@@ -38,7 +43,7 @@ def submit():
     if not player_id or not selected_profile:
 
         logger.error('Missing player ID or profile selection. Redirecting to homepage.')
-        return redirect(url_for('home'))
+        return redirect(url_for('results'))
 
     return redirect(url_for('results', player_id=player_id, selected_profile=selected_profile))
         
@@ -48,7 +53,6 @@ def results():
         college_player_id = request.args.get('player_id')
         selected_profile = request.args.get('selected_profile')
 
-        # debugging
         logger.info(college_player_id)
         logger.info(selected_profile)
 
@@ -59,23 +63,8 @@ def results():
         if not row.empty:
             college_player_name = row["playerName"].values[0]
 
-        college_player = {"MP": 0.0, "FG": 0.0, "FGA": 0.0, "FG%": 0.0, "3P": 0.0, "3PA": 0.0, 
-                        "3P%": 0.0, "FT": 0.0, "FTA": 0.0, "FT%": 0.0, "ORB": 0.0, "DRB": 0.0, 
-                        "TRB": 0.0, "AST": 0.0, "STL": 0.0, "BLK": 0.0, "TOV": 0.0, "PF": 0.0, "PTS": 0.0}
-
-        weight_profiles = {
-            "offense": {"MP": 6.0, "FG": 7.0, "FGA": 5.0, "FG%": 6.0, "3P": 9.0, "3PA": 5.0, "3P%": 8.0,
-                        "FT": 4.0, "FTA": 3.0, "FT%": 7.0, "ORB": 5.0, "DRB": 2.0, "TRB": 4.0, "AST": 7.0,
-                        "STL": 4.0, "BLK": 4.0, "TOV": 3.0, "PF": 2.0, "PTS": 8.0},
-            
-            "defense": {"MP": 6.0, "FG": 4.0, "FGA": 3.0, "FG%": 5.0, "3P": 4.0, "3PA": 3.0, "3P%": 4.0,
-                        "FT": 4.0, "FTA": 3.0, "FT%": 4.0, "ORB": 7.0, "DRB": 8.0, "TRB": 8.0, "AST": 5.0,
-                        "STL": 9.0, "BLK": 9.0, "TOV": 2.0, "PF": 6.0, "PTS": 4.0},
-            
-            "balanced": {"MP": 7.0, "FG": 6.0, "FGA": 6.0, "FG%": 6.0, "3P": 6.0, "3PA": 6.0, "3P%": 7.0,
-                        "FT": 6.0, "FTA": 6.0, "FT%": 6.0, "ORB": 6.0, "DRB": 6.0, "TRB": 6.0, "AST": 6.0,
-                        "STL": 6.0, "BLK": 6.0, "TOV": 4.0, "PF": 5.0, "PTS": 6.0}
-        }
+        college_player = csv_to_dict(college_player_csv)
+        weight_profiles = csv_to_nested_dict(weight_profiles_csv, key_column='profile')
 
         college_dataset = scrape_college_player_data(college_player_id, college_player, weight_profiles, selected_profile)
 

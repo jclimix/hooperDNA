@@ -223,9 +223,17 @@
         }
 
         // Handle form submission
+        let isSubmitting = false;
+
         document.getElementById('playerForm').addEventListener('submit', function(e) {
             e.preventDefault();  // Prevent the default form submission behavior
             console.log('Submit event captured!');
+
+            if (isSubmitting) {
+                return;  // Prevent multiple submissions
+            }
+
+            isSubmitting = true;  // Set the flag to true to indicate the form is being submitted
 
             const playerId = document.getElementById('player_id').value;
             const selected_profile = document.getElementById('selected_profile').value;
@@ -264,12 +272,15 @@
                 })
                 .catch(error => {
                     console.error('Error during submission:', error);
+                    isSubmitting = false;  // Reset the flag if there's an error
                 });
             } else {
-                // Alert the user if the player is not selected
                 alert('Please select a player before submitting.');
+                isSubmitting = false;  // Reset the flag if validation fails
             }
         });
+
+
 
     </script>
 
