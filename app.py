@@ -12,6 +12,7 @@ from utils import (
     shift_df_col, 
     shift_dict_key, 
     get_player_id,
+    get_college_player_name,
     csv_to_dict,
     csv_to_nested_dict, 
     scrape_nba_player_data, 
@@ -32,10 +33,6 @@ def home():
         
 @app.route('/submit', methods=['POST'])
 def submit():
-
-    if request.method == 'GET':
-        logger.info('Redirecting to home page...')
-        return redirect(url_for('home'))
     
     logger.info("Processing form submission...")
     player_id = request.form.get('player_id')
@@ -44,7 +41,8 @@ def submit():
 
         logger.error('Missing player ID or profile selection. Redirecting to homepage.')
         return redirect(url_for('results'))
-
+    
+    logger.info("Player id & selected profile captured successfully...")
     return redirect(url_for('results', player_id=player_id, selected_profile=selected_profile))
         
 @app.route('/results')
@@ -56,12 +54,7 @@ def results():
         logger.info(college_player_id)
         logger.info(selected_profile)
 
-        df = read_csv_from_s3('hooperdna-storage', 'college_data/college_basketball_players.csv')
-
-        row = df[df["playerId"] == college_player_id]
-
-        if not row.empty:
-            college_player_name = row["playerName"].values[0]
+        college_player_name = get_college_player_name(college_player_id)
 
         college_player = csv_to_dict(college_player_csv)
         weight_profiles = csv_to_nested_dict(weight_profiles_csv, key_column='profile')
@@ -80,7 +73,6 @@ def results():
         
         nba_dna_matches, first_nba_match = find_nba_matches(college_player, college_latest_stats, college_stats, weight_profiles, selected_profile, read_csv_from_s3)
 
-        # more debugging
         logger.info(f"\nBest NBA Player Match:")
         logger.info(first_nba_match)
 
@@ -98,17 +90,20 @@ def results():
         college_player_year = html_data["college_player_year"]
         comparison_df = html_data["comparison_df"]
 
-        logger.info(f"NBA Player Match Name: {nba_match_player_name}")
-        logger.info(f"NBA Player Match Season: {nba_match_player_year}")
-        logger.info(f"NBA Player Link: {nba_image_link}")
-        logger.info(f"NBA Player Height: {nba_player_height}")
-        logger.info(f"NBA Player Position: {nba_player_position}")
-        logger.info(f"DNA Match: {dna_match_percentage}")
-        logger.info(f"College Player Name: {college_player_name}")
-        logger.info(f"College Player Year: {college_player_year}")
-        logger.info(f"College Player Height: {college_player_height}")
-        logger.info(f"College Player Position: {college_player_position}")
-        logger.info(f"College Player Link: {college_image_link}")
+        logger.info("NBA and College Player Match Info", {
+            "NBA Match Name": nba_match_player_name,
+            "NBA Match Season": nba_match_player_year,
+            "NBA Match Link": nba_image_link,
+            "NBA Player Height": nba_player_height,
+            "NBA Player Position": nba_player_position,
+            "DNA Match Percentage": dna_match_percentage,
+            "College Player Name": college_player_name,
+            "College Player Year": college_player_year,
+            "College Player Height": college_player_height,
+            "College Player Position": college_player_position,
+            "College Player Link": college_image_link
+        })
+
 
         # Defining the max values for stats on results page for bar chart:
         statbox_42 = 42.0  
@@ -132,25 +127,14 @@ def results():
 
         first_nba_match = df_to_dict(first_nba_match)
 
-        college_player = shift_dict_key(college_player, "PTS", 0)
-        college_player = shift_dict_key(college_player, "AST", 1)
-        college_player = shift_dict_key(college_player, "TRB", 2)
-        college_player = shift_dict_key(college_player, "ORB", 3)
-        college_player = shift_dict_key(college_player, "DRB", 4)
-        college_player = shift_dict_key(college_player, "BLK", 5)
-        college_player = shift_dict_key(college_player, "STL", 6)
-        college_player = shift_dict_key(college_player, "FG%", 7)
-        college_player = shift_dict_key(college_player, "FG", 8)
-        college_player = shift_dict_key(college_player, "FGA", 9)
-        college_player = shift_dict_key(college_player, "3P%", 10)
-        college_player = shift_dict_key(college_player, "3P", 11)
-        college_player = shift_dict_key(college_player, "3PA", 12)
-        college_player = shift_dict_key(college_player, "FT%", 13)
-        college_player = shift_dict_key(college_player, "FT", 14)
-        college_player = shift_dict_key(college_player, "FTA", 15)
-        college_player = shift_dict_key(college_player, "TOV", 16)
-        college_player = shift_dict_key(college_player, "PF", 17)
-        college_player = shift_dict_key(college_player, "MP", 18)
+        stat_key_order = [
+            "PTS", "AST", "TRB", "ORB", "DRB", "BLK", "STL", 
+            "FG%", "FG", "FGA", "3P%", "3P", "3PA", "FT%", 
+            "FT", "FTA", "TOV", "PF", "MP"
+        ]
+
+        for i, key in enumerate(stat_key_order):
+            college_player = shift_dict_key(college_player, key, i)
 
         logger.info(college_player)
         logger.info(first_nba_match)
@@ -160,35 +144,50 @@ def results():
 
         generate_json_from_csv()
 
+        logger.info("Script complete. Should open 'comparison.html'")
+
+        nba_data = {
+            'name': nba_match_player_name,
+            'image_link': nba_image_link,
+            'height': nba_player_height,
+            'position': nba_player_position,
+            'stats': first_nba_match,
+            'dna_match_percentage': dna_match_percentage,
+            'match_year': nba_match_player_year
+        }
+
+        college_data = {
+            'name': college_player_name,
+            'height': college_player_height,
+            'position': college_player_position,
+            'image_link': college_image_link,
+            'stats': college_player,
+            'player_year': college_player_year
+        }
+
+        statbox_data = {
+            '42': statbox_42,
+            '27': statbox_27,
+            '15': statbox_15,
+            '5': statbox_5,
+            'percentage_stats': percentage_stats,
+            '42_stats': statbox_42_stats,
+            '27_stats': statbox_27_stats,
+            '15_stats': statbox_15_stats,
+            '5_stats': statbox_5_stats,
+            'max_percentage': max_percentage
+        }
+
         return render_template(
             "comparison.html",
-            nba_match_player_name=nba_match_player_name,
-            nba_image_link=nba_image_link,
-            nba_player_height=nba_player_height,
-            nba_player_position=nba_player_position,
-            dna_match_percentage=dna_match_percentage,
-            college_player_name=college_player_name,
-            college_player_height=college_player_height,
-            college_player_position=college_player_position,
-            college_image_link=college_image_link,
-            college_player=college_player,
-            first_nba_match=first_nba_match,
-            statbox_42=statbox_42,
-            statbox_27=statbox_27,
-            statbox_15=statbox_15,
-            statbox_5=statbox_5,
-            percentage_stats=percentage_stats,
-            statbox_42_stats=statbox_42_stats,
-            statbox_27_stats=statbox_27_stats,
-            statbox_15_stats=statbox_15_stats,
-            statbox_5_stats=statbox_5_stats,
-            max_percentage=max_percentage,
-            nba_match_player_year=nba_match_player_year,
-            college_player_year=college_player_year,
+            nba_data=nba_data,
+            college_data=college_data,
+            statbox_data=statbox_data,
             comparison_df=comparison_df,
             selected_profile=selected_profile,
             nba_dna_matches=nba_dna_matches
         )
+
 
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=8005)

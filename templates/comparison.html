@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HooperDNA | {{ college_player_name }}'s NBA Matches</title>
+    <title>HooperDNA | {{ college_data.name }}'s NBA Matches</title>
 
     <link rel="icon" href="https://i.ibb.co/yXcbqyv/favicon-16x16.png" type="image/png">
 
@@ -358,93 +358,93 @@
     <div class="logo-container">
         <img src="https://i.ibb.co/3SvXSwQ/Hooper-DNA-1-removebg.png" alt="Hooper-DNA-logo" border="0">
     </div>
-
+    
     <div class="image-container">
         <div style="text-align: center;">
-            <h2>{{ college_player_name }}<br>({{ college_player_year }})</h2>
-            <img src="{{ college_image_link }}" alt="college_player">
-            <p>Position: {{ college_player_position }}</p>
-            <p>Height: {{ college_player_height }}</p>
+            <h2>{{ college_data.name }}<br>({{ college_data.player_year }})</h2>
+            <img src="{{ college_data.image_link }}" alt="college_player">
+            <p>Position: {{ college_data.position }}</p>
+            <p>Height: {{ college_data.height }}</p>
         </div>
-
+    
         <div style="text-align: center;">
-            <h2>{{ nba_match_player_name }}<br>({{ nba_match_player_year }})</h2>
-            <img src="{{ nba_image_link }}" alt="nba_player">
-            <p>Position: {{ nba_player_position }}</p>
-            <p >Height: {{ nba_player_height }}</p>
+            <h2>{{ nba_data.name }}<br>({{ nba_data.match_year }})</h2>
+            <img src="{{ nba_data.image_link }}" alt="nba_player">
+            <p>Position: {{ nba_data.position }}</p>
+            <p>Height: {{ nba_data.height }}</p>
         </div>
     </div>
-
+    
     <!-- Progress Bar -->
     <div class="progress-container">
-        <div class="progress-bar" style="width: {{ dna_match_percentage }}%;">
-            <div class="progress-percentage">{{ dna_match_percentage }}% MATCH</div>
+        <div class="progress-bar" style="width: {{ nba_data.dna_match_percentage }}%;">
+            <div class="progress-percentage">{{ nba_data.dna_match_percentage }}% MATCH</div>
         </div>
     </div>
-
+    
     <br><br>
-
+    
     <h1>Match Profile:</h1>
     <h3>{{ selected_profile }}</h3>
-
+    
     <div class="container">
         <div class="comparison-chart">
-            {% for stat in college_player.keys() %}
+            {% for stat in college_data.stats.keys() %}
             <div class="stat-row">
-                <span>{{ college_player[stat] }}</span>
+                <span>{{ college_data.stats[stat] }}</span>
                 <div class="stat-bar">
                     <div class="bar-inner blue" style="width: 
-                        {% if stat in percentage_stats %}
-                            {{ (college_player[stat] / max_percentage) * 100 }}%
-                        {% elif stat in statbox_42_stats %}
-                            {{ (college_player[stat] / statbox_42) * 100 }}%
-                        {% elif stat in statbox_27_stats %}
-                            {{ (college_player[stat] / statbox_27) * 100 }}%
-                        {% elif stat in statbox_15_stats %}
-                            {{ (college_player[stat] / statbox_15) * 100 }}%
-                        {% elif stat in statbox_5_stats %}
-                            {{ (college_player[stat] / statbox_5) * 100 }}%
+                        {% if stat in statbox_data.percentage_stats %}
+                            {{ (college_data.stats[stat] / statbox_data.max_percentage) * 100 }}%
+                        {% elif stat in statbox_data['42_stats'] %}
+                            {{ (college_data.stats[stat] / statbox_data['42']) * 100 }}%
+                        {% elif stat in statbox_data['27_stats'] %}
+                            {{ (college_data.stats[stat] / statbox_data['27']) * 100 }}%
+                        {% elif stat in statbox_data['15_stats'] %}
+                            {{ (college_data.stats[stat] / statbox_data['15']) * 100 }}%
+                        {% elif stat in statbox_data['5_stats'] %}
+                            {{ (college_data.stats[stat] / statbox_data['5']) * 100 }}%
                         {% else %}
-                            {{ (college_player[stat] / statbox_15) * 100 }}%
+                            {{ (college_data.stats[stat] / statbox_data['15']) * 100 }}%
                         {% endif %};"></div>
                 </div>
                 <span class="stat-label">{{ stat.upper() }}</span>
                 <div class="stat-bar">
                     <div class="bar-inner orange" style="width: 
-                        {% if stat in percentage_stats %}
-                            {{ (first_nba_match[stat] / max_percentage) * 100 }}%
-                        {% elif stat in statbox_42_stats %}
-                            {{ (first_nba_match[stat] / statbox_42) * 100 }}%
-                        {% elif stat in statbox_27_stats %}
-                            {{ (first_nba_match[stat] / statbox_27) * 100 }}%
-                        {% elif stat in statbox_15_stats %}
-                            {{ (first_nba_match[stat] / statbox_15) * 100 }}%
-                        {% elif stat in statbox_5_stats %}
-                            {{ (first_nba_match[stat] / statbox_5) * 100 }}%
+                        {% if stat in statbox_data.percentage_stats %}
+                            {{ (nba_data.stats[stat] / statbox_data.max_percentage) * 100 }}%
+                        {% elif stat in statbox_data['42_stats'] %}
+                            {{ (nba_data.stats[stat] / statbox_data['42']) * 100 }}%
+                        {% elif stat in statbox_data['27_stats'] %}
+                            {{ (nba_data.stats[stat] / statbox_data['27']) * 100 }}%
+                        {% elif stat in statbox_data['15_stats'] %}
+                            {{ (nba_data.stats[stat] / statbox_data['15']) * 100 }}%
+                        {% elif stat in statbox_data['5_stats'] %}
+                            {{ (nba_data.stats[stat] / statbox_data['5']) * 100 }}%
                         {% else %}
-                            {{ (first_nba_match[stat] / statbox_15) * 100 }}%
+                            {{ (nba_data.stats[stat] / statbox_data['15']) * 100 }}%
                         {% endif %};"></div>
                 </div>
-                <span>{{ first_nba_match[stat] }}</span>
+                <span>{{ nba_data.stats[stat] }}</span>
             </div>
             {% endfor %}
         </div>
     </div>
     <br><br>
-
-
+    
     <div class="hide-on-mobile">
         <h4>Top Match Comparison</h4>
         {{ comparison_df|safe }}
-
+    
         <br><br>
-
+    
         <h4>Top Matches</h4>
         {{ nba_dna_matches|safe }}
-
+    
         <br><br>
         <br><br>
     </div>
+    
 
     <script>
         window.onpopstate = function(event) {

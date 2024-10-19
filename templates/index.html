@@ -226,9 +226,9 @@
         let isSubmitting = false;
 
         document.getElementById('playerForm').addEventListener('submit', function(e) {
-            e.preventDefault();  // Prevent the default form submission behavior
             console.log('Submit event captured!');
-
+            
+            // No need to preventDefault here; we allow the form to submit as usual
             if (isSubmitting) {
                 return;  // Prevent multiple submissions
             }
@@ -238,47 +238,17 @@
             const playerId = document.getElementById('player_id').value;
             const selected_profile = document.getElementById('selected_profile').value;
 
-            if (playerId) {
-                const formData = new URLSearchParams();
-                formData.append('player_id', playerId);
-                formData.append('selected_profile', selected_profile);
-
-                console.log('Submitting form data:', {
-                    player_id: playerId,
-                    selected_profile: selected_profile
-                });
-
-                fetch('/submit', {
-                    method: 'POST',  // Ensure POST request
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: formData
-                })
-                .then(response => {
-                    console.log('Response received:', response);
-
-                    if (!response.ok) {
-                        console.error(`Network response was not ok. Status: ${response.status}`);
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.text();  // Assuming your server responds with text or HTML
-                })
-                .then(data => {
-                    console.log('Form submitted successfully. Redirecting to results page...');
-
-                    // Redirect to the results page with player_id and selected_profile
-                    window.location.href = `/results?player_id=${playerId}&selected_profile=${selected_profile}`;
-                })
-                .catch(error => {
-                    console.error('Error during submission:', error);
-                    isSubmitting = false;  // Reset the flag if there's an error
-                });
-            } else {
+            if (!playerId) {
                 alert('Please select a player before submitting.');
                 isSubmitting = false;  // Reset the flag if validation fails
+                return;  // Prevent form submission if validation fails
             }
+
+            console.log('Form data is valid, allowing normal submission.');
+            // The form will now be submitted naturally, and Flask will handle the redirect
+            isSubmitting = false;  // Reset the flag after submission (form will submit naturally)
         });
+
 
 
 

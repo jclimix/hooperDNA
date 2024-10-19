@@ -13,10 +13,10 @@ from dotenv import load_dotenv
 import os, logging, boto3, pandas as pd, io
 from loguru import logger
 
-def read_csv_from_s3(bucket_name, key):
+load_dotenv('../secrets/s3-hooperdna/.env')
+logging.basicConfig(level=logging.INFO)
 
-    load_dotenv()
-    logging.basicConfig(level=logging.INFO)
+def read_csv_from_s3(bucket_name, key):
 
     s3 = boto3.client('s3', region_name=os.getenv('AWS_REGION'))
 
@@ -88,6 +88,12 @@ def get_player_id(player_name, csv_file):
         return player_id
     else:
         return None
+    
+def get_college_player_name(college_player_id):
+    df = read_csv_from_s3('hooperdna-storage', 'college_data/college_basketball_players.csv')
+    row = df[df["playerId"] == college_player_id]
+    return row["playerName"].values[0] if not row.empty else None
+
 
 def csv_to_nested_dict(csv_file, key_column):
     df = pd.read_csv(csv_file)
