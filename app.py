@@ -146,7 +146,7 @@ def results():
 
         logger.info("Script complete. Should open 'comparison.html'")
 
-        nba_data = {
+        nba_data = { 
             'name': nba_match_player_name,
             'image_link': nba_image_link,
             'height': nba_player_height,
