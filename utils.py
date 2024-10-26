@@ -146,27 +146,28 @@ def scrape_nba_player_data(nba_match_player_name):
         logger.error(f"Error while scraping the webpage: {e}")
 
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
 
-        soup = BeautifulSoup(response.content, "html.parser")
+        soup = BeautifulSoup(response.content, 'html.parser')
 
-        height_pattern = re.compile(r"([4-8]-\d{1,2})")
+        height_pattern = re.compile(r'([4-8]-\d{1,2})')
 
-        height_element = soup.find("p", string=height_pattern)
-
-        if height_element:
-
-            height_match = height_pattern.search(height_element.text)
+        metadata = soup.find('div', id="meta")
+        if metadata:
+            height_match = height_pattern.search(metadata.text)
             if height_match:
                 height = height_match.group(0)
             else:
-                logger.error("Height not found.")
+                print("Height pattern not found in metadata.")
+                return None
         else:
-            logger.error("Height element not found.")
+            print("Metadata element not found.")
+            return None
 
     except requests.exceptions.RequestException as e:
-        logger.error(f"Error while scraping the webpage: {e}")
+        print(f"Error while scraping the webpage: {e}")
+        return None
 
     return img_link, height
 

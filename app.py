@@ -3,15 +3,10 @@ from loguru import logger
 from waitress import serve
 
 from utils import (
-    read_csv_from_s3, 
-    move_column, 
-    remove_column, 
-    extract_first_row, 
+    read_csv_from_s3,  
     round_dict_values, 
     df_to_dict, 
-    shift_df_col, 
     shift_dict_key, 
-    get_player_id,
     get_college_player_name,
     csv_to_dict,
     csv_to_nested_dict, 
@@ -22,6 +17,7 @@ from utils import (
     compile_html_data
 )
 
+# capitalize global vars
 college_player_csv = './csv_files/college_player.csv'
 weight_profiles_csv = './csv_files/weight_profiles.csv'
 
@@ -54,6 +50,8 @@ def results():
         logger.info(college_player_id)
         logger.info(selected_profile)
 
+        #refactor into function/mod to be called
+        # for homme, submmit, result routes
         college_player_name = get_college_player_name(college_player_id)
 
         college_player = csv_to_dict(college_player_csv)
