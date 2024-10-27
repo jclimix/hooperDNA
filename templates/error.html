@@ -363,87 +363,37 @@
     
     <div class="image-container">
         <div style="text-align: center;">
-            <h2>{{ college_data.name }}<br>({{ college_data.player_year }})</h2>
+            <h2>Kevin Durant<br>({{ college_data.player_year }})</h2>
             <img src="{{ college_data.image_link }}" alt="college_player">
-            <p>Position: {{ college_data.position }}</p>
+            <p>Position: PG</p>
             <p>Height: {{ college_data.height }}</p>
         </div>
     
         <div style="text-align: center;">
-            <h2>{{ nba_data.name }}<br>({{ nba_data.match_year }})</h2>
-            <img src="{{ nba_data.image_link }}" alt="nba_player">
-            <p>Position: {{ nba_data.position }}</p>
-            <p>Height: {{ nba_data.height }}</p>
+            <h2>Zach Edey<br>(2023-24)</h2>
+            <img src="https://www.sports-reference.com/req/202302071/cbb/images/players/zach-edey-1.jpg" alt="nba_player">
+            <p>Position: C</p>
+            <p>Height: 7-4</p>
         </div>
+
     </div>
-    
-    <!-- Progress Bar -->
-    <div class="progress-container">
-        <div class="progress-bar" style="width: {{ nba_data.dna_match_percentage }}%;">
-            <div class="progress-percentage">{{ nba_data.dna_match_percentage }}% MATCH</div>
+
+    <div class="image-container">
+        <div style="text-align: center;">
+            <h2>Caitlin Clark<br>(2023-24)</h2>
+            <img src="https://www.sports-reference.com/req/202302071/cbb/images/players/caitlin-clark-1.jpg" alt="college_player">
+            <p>Position: G</p>
+            <p>Height: 6-0</p>
         </div>
-    </div>
     
-    <br><br>
-    
-    <h1>Match Profile:</h1>
-    <h3>{{ selected_profile }}</h3>
-    
-    <div class="container">
-        <div class="comparison-chart">
-            {% for stat in college_data.stats.keys() %}
-            <div class="stat-row">
-                <span>{{ college_data.stats[stat] }}</span>
-                <div class="stat-bar">
-                    <div class="bar-inner blue" style="width: 
-                        {% if stat in statbox_data.percentage_stats %}
-                            {{ (college_data.stats[stat] / statbox_data.max_percentage) * 100 }}%
-                        {% elif stat in statbox_data['42_stats'] %}
-                            {{ (college_data.stats[stat] / statbox_data['42']) * 100 }}%
-                        {% elif stat in statbox_data['27_stats'] %}
-                            {{ (college_data.stats[stat] / statbox_data['27']) * 100 }}%
-                        {% elif stat in statbox_data['15_stats'] %}
-                            {{ (college_data.stats[stat] / statbox_data['15']) * 100 }}%
-                        {% elif stat in statbox_data['5_stats'] %}
-                            {{ (college_data.stats[stat] / statbox_data['5']) * 100 }}%
-                        {% else %}
-                            {{ (college_data.stats[stat] / statbox_data['15']) * 100 }}%
-                        {% endif %};"></div>
-                </div>
-                <span class="stat-label">{{ stat.upper() }}</span>
-                <div class="stat-bar">
-                    <div class="bar-inner orange" style="width: 
-                        {% if stat in statbox_data.percentage_stats %}
-                            {{ (nba_data.stats[stat] / statbox_data.max_percentage) * 100 }}%
-                        {% elif stat in statbox_data['42_stats'] %}
-                            {{ (nba_data.stats[stat] / statbox_data['42']) * 100 }}%
-                        {% elif stat in statbox_data['27_stats'] %}
-                            {{ (nba_data.stats[stat] / statbox_data['27']) * 100 }}%
-                        {% elif stat in statbox_data['15_stats'] %}
-                            {{ (nba_data.stats[stat] / statbox_data['15']) * 100 }}%
-                        {% elif stat in statbox_data['5_stats'] %}
-                            {{ (nba_data.stats[stat] / statbox_data['5']) * 100 }}%
-                        {% else %}
-                            {{ (nba_data.stats[stat] / statbox_data['15']) * 100 }}%
-                        {% endif %};"></div>
-                </div>
-                <span>{{ nba_data.stats[stat] }}</span>
-            </div>
-            {% endfor %}
+        <div style="text-align: center;">
+            <h2>Dalton Knecht<br>(2023-2024)</h2>
+            <img src="https://www.sports-reference.com/req/202302071/cbb/images/players/dalton-knecht-1.jpg" alt="nba_player">
+            <p>Position: G</p>
+            <p>Height: 6-6</p>
         </div>
-    </div>
-    <br><br>
-    
-    <div class="hide-on-mobile">
-        <h4>Top Match Comparison</h4>
-        {{ comparison_df|safe }}
-    
-        <br><br>
-    
-        <h4>Top Matches</h4>
-        {{ nba_dna_matches|safe }}
-    
-        <br><br>
+
+    </div>    
         <br><br>
     </div>
     

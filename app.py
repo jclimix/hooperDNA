@@ -26,6 +26,10 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.errorhandler(500)
+def internal_server_error(error):
+    return render_template("error.html"), 500
         
 @app.route('/submit', methods=['POST'])
 def submit():
