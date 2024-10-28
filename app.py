@@ -13,10 +13,6 @@ from utils import (
     scrape_nba_player_data
 )
 
-# capitalize global vars
-college_player_csv = './csv_files/college_player.csv'
-weight_profiles_csv = './csv_files/weight_profiles.csv'
-
 app = Flask(__name__)
 
 @app.route('/')
@@ -45,9 +41,6 @@ def results():
 
     logger.info(college_player_id)
     logger.info(selected_profile)
-
-    #college_player_id = 'zach-edey-1'
-    #selected_profile = 'offense'
 
     college_player_name = get_college_player_name(college_player_id)
 
@@ -96,14 +89,14 @@ def results():
         f"College Player Link: {college_headshot_link}"
     )
 
-    # Defining the max values for stats on results page for bar chart:
+    # max values for stats on results page for bar chart:
     statbox_42 = 42.0  
     statbox_27 = 27.0 
     statbox_15 = 20.0 
     statbox_5 = 5.0 
     max_percentage = 1
 
-    # Defining which stats belong to which ranges:
+    # stats that belong to each range:
     percentage_stats = ["FG%", "eFG%", "2P%", "3P%", "FT%"]
     statbox_42_stats = ["PTS", "MP"]
     statbox_27_stats = ["FG", "FGA", "3P", "3PA", "FT", "FTA"]
@@ -121,8 +114,6 @@ def results():
     top_10_nba_matches = top_10_nba_matches.to_html(index=False)
     mobile_top_10_nba_matches = mobile_top_10_nba_matches.to_html(index=False)
 
-
-    # Adjusted statbox_data to match HTML keys like 'statbox_15'
     statbox_data = {
         'statbox_42': statbox_42,
         'statbox_27': statbox_27,
@@ -166,7 +157,6 @@ def results():
                 nba_dna_matches=top_10_nba_matches,
                 mobile_top_10_nba_matches=mobile_top_10_nba_matches
             )
-
 
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=8005)
