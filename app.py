@@ -1,20 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for
 from loguru import logger
 from waitress import serve
+import pandas as pd
+from loguru import logger
 
 from utils import (
-    read_csv_from_s3,  
-    round_dict_values, 
-    df_to_dict, 
-    shift_dict_key, 
-    get_college_player_name,
-    csv_to_dict,
-    csv_to_nested_dict, 
-    scrape_nba_player_data, 
-    generate_json_from_csv, 
-    scrape_college_player_data, 
-    find_nba_matches, 
-    compile_html_data
+    get_college_player_name, 
+    scrape_college_data, 
+    adjust_stats, 
+    create_weights_df,
+    find_matches_before_college_player, 
+    scrape_nba_player_data
 )
 
 # capitalize global vars
@@ -44,150 +40,132 @@ def submit():
 @app.route('/results')
 def results():
         
-        college_player_id = request.args.get('player_id')
-        selected_profile = request.args.get('selected_profile')
+    college_player_id = request.args.get('player_id')
+    selected_profile = request.args.get('selected_profile')
 
-        logger.info(college_player_id)
-        logger.info(selected_profile)
+    logger.info(college_player_id)
+    logger.info(selected_profile)
 
-        #refactor into function/mod to be called
-        # for homme, submmit, result routes
+    #college_player_id = 'zach-edey-1'
+    #selected_profile = 'offense'
 
-        college_player_name = get_college_player_name(college_player_id)
+    college_player_name = get_college_player_name(college_player_id)
 
-        college_player = csv_to_dict(college_player_csv)
-        weight_profiles = csv_to_nested_dict(weight_profiles_csv, key_column='profile')
+    college_player_height, college_player_stats_df, college_headshot_link = scrape_college_data(college_player_id)
 
-        college_dataset = scrape_college_player_data(college_player_id, college_player, weight_profiles, selected_profile)
+    adjusted_college_stats_df = adjust_stats(college_player_stats_df)
 
-        college_player = college_dataset['stats']
-        college_latest_stats = college_dataset['college_latest_stats']
-        college_player_stats_df = college_dataset['college_player_stats_df']
-        college_player_height = college_dataset['height']
-        college_image_link = college_dataset['headshot']
-        college_stats = college_dataset['weighted_stats']
-        college_player_position = college_latest_stats.get("Pos", "Unknown")
+    college_player_season = str(college_player_stats_df['Season'].values[0])
+    college_player_position = str(college_player_stats_df['Pos'].values[0])
 
-        # cutoff for scraping college data
-        
-        nba_dna_matches, first_nba_match = find_nba_matches(college_player, college_latest_stats, college_stats, weight_profiles, selected_profile, read_csv_from_s3)
+    weights_df = create_weights_df(selected_profile)
 
-        logger.info(f"\nBest NBA Player Match:")
-        logger.info(first_nba_match)
+    all_nba_matches = find_matches_before_college_player(college_player_season, adjusted_college_stats_df, weights_df)
+    top_10_nba_matches = all_nba_matches.head(10)
 
-        logger.info(f"\n{college_player_name}'s NBA Player Matches (In Last Decade):")
-        logger.info(nba_dna_matches)
+    with pd.option_context('display.max_columns', None):
+        logger.info(top_10_nba_matches)
 
-        html_data = compile_html_data(first_nba_match, college_latest_stats, college_player_stats_df, college_player_name, scrape_nba_player_data)
+    top_1_nba_match_name = top_10_nba_matches["Player"].iloc[0]
+    top_1_nba_match_season = top_10_nba_matches["Season"].iloc[0]
+    top_1_nba_match_position = top_10_nba_matches["Pos"].iloc[0]
+    top_1_nba_match_dna_match_pct = top_10_nba_matches["DNA Match"].iloc[0]
+    top_1_nba_match_stats = top_10_nba_matches.iloc[[0]]
 
-        nba_match_player_name = html_data["nba_match_player_name"]
-        nba_image_link = html_data["nba_image_link"]
-        nba_player_height = html_data["nba_player_height"]
-        nba_player_position = html_data["nba_player_position"]
-        dna_match_percentage = html_data["dna_match_percentage"]
-        nba_match_player_year = html_data["nba_match_player_year"]
-        college_player_year = html_data["college_player_year"]
-        comparison_df = html_data["comparison_df"]
+    college_nba_join_stats = pd.concat([college_player_stats_df, top_1_nba_match_stats], axis=0, join='outer', ignore_index=True)
+    columns_to_remove = ['Conf', 'Class', 'Rk', 'Player', 'Age', 'DNA Match']
+    college_nba_join_stats = college_nba_join_stats.drop(columns=columns_to_remove)
 
-        logger.info("NBA and College Player Match Info", {
-            "NBA Match Name": nba_match_player_name,
-            "NBA Match Season": nba_match_player_year,
-            "NBA Match Link": nba_image_link,
-            "NBA Player Height": nba_player_height,
-            "NBA Player Position": nba_player_position,
-            "DNA Match Percentage": dna_match_percentage,
-            "College Player Name": college_player_name,
-            "College Player Year": college_player_year,
-            "College Player Height": college_player_height,
-            "College Player Position": college_player_position,
-            "College Player Link": college_image_link
-        })
+    top_1_nba_match_headshot_link, top_1_nba_match_height = scrape_nba_player_data(top_1_nba_match_name)
+
+    keep_columns = ['Season', 'Player', 'Team', 'Pos', 'Awards', 'DNA Match']
+    mobile_top_10_nba_matches = top_10_nba_matches[keep_columns]
+
+    logger.info(
+        "NBA and College Player Match Info:\n"
+        f"NBA Match Name: {top_1_nba_match_name}\n"
+        f"NBA Match Season: {top_1_nba_match_season}\n"
+        f"NBA Player Height: {top_1_nba_match_height}\n"
+        f"NBA Match Link: {top_1_nba_match_headshot_link}\n"
+        f"NBA Player Position: {top_1_nba_match_position}\n"
+        f"DNA Match Percentage: {top_1_nba_match_dna_match_pct}\n"
+        f"College Player Name: {college_player_name}\n"
+        f"College Player Season: {college_player_season}\n"
+        f"College Player Height: {college_player_height}\n"
+        f"College Player Position: {college_player_position}\n"
+        f"College Player Link: {college_headshot_link}"
+    )
+
+    # Defining the max values for stats on results page for bar chart:
+    statbox_42 = 42.0  
+    statbox_27 = 27.0 
+    statbox_15 = 20.0 
+    statbox_5 = 5.0 
+    max_percentage = 1
+
+    # Defining which stats belong to which ranges:
+    percentage_stats = ["FG%", "eFG%", "2P%", "3P%", "FT%"]
+    statbox_42_stats = ["PTS", "MP"]
+    statbox_27_stats = ["FG", "FGA", "3P", "3PA", "FT", "FTA"]
+    statbox_15_stats = ["AST", "TRB", "ORB", "DRB"]
+    statbox_5_stats = ["TOV", "PF", "STL", "BLK"]
+
+    selected_columns = percentage_stats + statbox_42_stats + statbox_27_stats + statbox_15_stats + statbox_5_stats
+    existing_columns = [col for col in selected_columns if col in college_player_stats_df.columns]
+    college_stats_filtered_df = college_player_stats_df[existing_columns]
+    college_stats_dict = college_stats_filtered_df.to_dict(orient="records")[0]
+
+    nba_stats_dict = {key: value for key, value in top_1_nba_match_stats.iloc[0].to_dict().items() if key in college_stats_dict}
+
+    college_nba_join_stats = college_nba_join_stats.to_html(index=False)
+    top_10_nba_matches = top_10_nba_matches.to_html(index=False)
+    mobile_top_10_nba_matches = mobile_top_10_nba_matches.to_html(index=False)
 
 
-        # Defining the max values for stats on results page for bar chart:
-        statbox_42 = 42.0  
-        statbox_27 = 27.0 
-        statbox_15 = 15.0 
-        statbox_5 = 5.0 
-        max_percentage = 1
+    # Adjusted statbox_data to match HTML keys like 'statbox_15'
+    statbox_data = {
+        'statbox_42': statbox_42,
+        'statbox_27': statbox_27,
+        'statbox_15': statbox_15,
+        'statbox_5': statbox_5,
+        'percentage_stats': percentage_stats,
+        'statbox_42_stats': statbox_42_stats,
+        'statbox_27_stats': statbox_27_stats,
+        'statbox_15_stats': statbox_15_stats,
+        'statbox_5_stats': statbox_5_stats,
+        'max_percentage': max_percentage
+    }
 
-        # Defining which stats belong to which ranges:
-        percentage_stats = ["FG%", "eFG%", "2P%", "3P%", "FT%"]
-        statbox_42_stats = ["PTS", "MP"]
-        statbox_27_stats = ["FG", "FGA", "3P", "3PA", "FT", "FTA"]
-        statbox_15_stats = ["AST", "TRB", "ORB", "DRB"]
-        statbox_5_stats = ["TOV", "PF", "STL", "BLK"]
-
-        for key in college_player:
-            college_player[key] = float(college_player[key])
-
-        college_player = round_dict_values(college_player)
-        first_nba_match = first_nba_match.round(2)
-
-        first_nba_match = df_to_dict(first_nba_match)
-
-        stat_key_order = [
-            "PTS", "AST", "TRB", "ORB", "DRB", "BLK", "STL", 
-            "FG%", "FG", "FGA", "3P%", "3P", "3PA", "FT%", 
-            "FT", "FTA", "TOV", "PF", "MP"
-        ]
-
-        for i, key in enumerate(stat_key_order):
-            college_player = shift_dict_key(college_player, key, i)
-
-        logger.info(college_player)
-        logger.info(first_nba_match)
-
-        comparison_df = comparison_df.to_html(index=False)
-        nba_dna_matches = nba_dna_matches.to_html(index=False)
-
-        generate_json_from_csv()
-
-        logger.info("Script complete. Should open 'comparison.html'")
-
-        nba_data = { 
-            'name': nba_match_player_name,
-            'image_link': nba_image_link,
-            'height': nba_player_height,
-            'position': nba_player_position,
-            'stats': first_nba_match,
-            'dna_match_percentage': dna_match_percentage,
-            'match_year': nba_match_player_year
+    nba_data = { 
+            'name': top_1_nba_match_name,
+            'image_link': top_1_nba_match_headshot_link,
+            'height': top_1_nba_match_height,
+            'position': top_1_nba_match_position,
+            'stats': nba_stats_dict,
+            'dna_match_percentage': top_1_nba_match_dna_match_pct,
+            'match_year': top_1_nba_match_season
         }
 
-        college_data = {
+    college_data = {
             'name': college_player_name,
             'height': college_player_height,
             'position': college_player_position,
-            'image_link': college_image_link,
-            'stats': college_player,
-            'player_year': college_player_year
+            'image_link': college_headshot_link,
+            'stats': college_player_stats_df,
+            'player_year': college_player_season
         }
 
-        print(f'NBA Player Name: {college_data.name}')
-
-        statbox_data = {
-            '42': statbox_42,
-            '27': statbox_27,
-            '15': statbox_15,
-            '5': statbox_5,
-            'percentage_stats': percentage_stats,
-            '42_stats': statbox_42_stats,
-            '27_stats': statbox_27_stats,
-            '15_stats': statbox_15_stats,
-            '5_stats': statbox_5_stats,
-            'max_percentage': max_percentage
-        }
-
-        return render_template(
-            "comparison.html",
-            nba_data=nba_data,
-            college_data=college_data,
-            statbox_data=statbox_data,
-            comparison_df=comparison_df,
-            selected_profile=selected_profile,
-            nba_dna_matches=nba_dna_matches
-        )
+    return render_template(
+                "comparison.html",
+                nba_data=nba_data,
+                college_data=college_data,
+                college_stats=college_stats_dict,
+                statbox_data=statbox_data,
+                comparison_df=college_nba_join_stats,
+                selected_profile=selected_profile,
+                nba_dna_matches=top_10_nba_matches,
+                mobile_top_10_nba_matches=mobile_top_10_nba_matches
+            )
 
 
 if __name__ == "__main__":

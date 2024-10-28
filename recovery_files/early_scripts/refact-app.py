@@ -327,6 +327,7 @@ with pd.option_context('display.max_columns', None):
 top_1_nba_match_name = top_10_nba_matches["Player"].iloc[0]
 top_1_nba_match_season = top_10_nba_matches["Season"].iloc[0]
 top_1_nba_match_pos = top_10_nba_matches["Pos"].iloc[0]
+top_1_nba_match_stats = top_10_nba_matches.iloc[[0]]
 
 print(f"Top NBA Match Name: {top_1_nba_match_name}")
 print(f"Top NBA Match Season: {top_1_nba_match_season}")
@@ -336,3 +337,9 @@ top_1_nba_match_headshot_link, top_1_nba_match_height = scrape_nba_player_data(t
 
 print(f"Top NBA Match Height: {top_1_nba_match_height}")
 print(f"Top NBA Match Headshot Link: {top_1_nba_match_headshot_link}")
+
+college_nba_join_stats = pd.concat([college_player_stats_df, top_1_nba_match_stats], axis=0, join='outer', ignore_index=True)
+columns_to_remove = ['Conf', 'Class', 'Rk', 'Player', 'Age', 'DNA Match']
+college_nba_join_stats = college_nba_join_stats.drop(columns=columns_to_remove)
+
+print(top_1_nba_match_stats)

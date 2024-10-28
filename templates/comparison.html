@@ -209,8 +209,15 @@
             background-color: #f9f9f9; /* Lighter background for alternating rows */
         }
 
-
+        @media (min-width: 769px) {
+            .mobile-only {
+                display: none; /* Hide the element on larger screens */
+            }
+        }
         @media screen and (max-width: 768px) {
+            .mobile-only {
+                display: block;
+            }
             .hide-on-mobile {
                 display: none 
             }
@@ -356,7 +363,7 @@
 
 <body>
     <div class="logo-container">
-        <a href="https://hooperdna.universe-j.com">
+        <a href="javascript:history.back()">
             <img src="https://i.ibb.co/3SvXSwQ/Hooper-DNA-1-removebg.png" alt="Hooper-DNA-logo" border="0">
         </a>
     </div>
@@ -391,47 +398,75 @@
     
     <div class="container">
         <div class="comparison-chart">
-            {% for stat in college_data.stats.keys() %}
+            {% for stat, value in college_stats.items() %}
             <div class="stat-row">
-                <span>{{ college_data.stats[stat] }}</span>
+                <!-- Display College Player Stat -->
+                <span class="college-stat-value">{{ value }}</span>
                 <div class="stat-bar">
                     <div class="bar-inner blue" style="width: 
-                        {% if stat in statbox_data.percentage_stats %}
-                            {{ (college_data.stats[stat] / statbox_data.max_percentage) * 100 }}%
-                        {% elif stat in statbox_data['42_stats'] %}
-                            {{ (college_data.stats[stat] / statbox_data['42']) * 100 }}%
-                        {% elif stat in statbox_data['27_stats'] %}
-                            {{ (college_data.stats[stat] / statbox_data['27']) * 100 }}%
-                        {% elif stat in statbox_data['15_stats'] %}
-                            {{ (college_data.stats[stat] / statbox_data['15']) * 100 }}%
-                        {% elif stat in statbox_data['5_stats'] %}
-                            {{ (college_data.stats[stat] / statbox_data['5']) * 100 }}%
+                        {% if stat in statbox_data['percentage_stats'] %}
+                            {{ (value|float / statbox_data['max_percentage']) * 100 }}%
+                        {% elif stat in statbox_data['statbox_42_stats'] %}
+                            {{ (value|float / statbox_data['statbox_42']) * 100 }}%
+                        {% elif stat in statbox_data['statbox_27_stats'] %}
+                            {{ (value|float / statbox_data['statbox_27']) * 100 }}%
+                        {% elif stat in statbox_data['statbox_15_stats'] %}
+                            {{ (value|float / statbox_data['statbox_15']) * 100 }}%
+                        {% elif stat in statbox_data['statbox_5_stats'] %}
+                            {{ (value|float / statbox_data['statbox_5']) * 100 }}%
                         {% else %}
-                            {{ (college_data.stats[stat] / statbox_data['15']) * 100 }}%
+                            {{ (value|float / statbox_data['statbox_15']) * 100 }}%
                         {% endif %};"></div>
                 </div>
                 <span class="stat-label">{{ stat.upper() }}</span>
+                
+                <!-- Display NBA Player Stat -->
                 <div class="stat-bar">
-                    <div class="bar-inner orange" style="width: 
-                        {% if stat in statbox_data.percentage_stats %}
-                            {{ (nba_data.stats[stat] / statbox_data.max_percentage) * 100 }}%
-                        {% elif stat in statbox_data['42_stats'] %}
-                            {{ (nba_data.stats[stat] / statbox_data['42']) * 100 }}%
-                        {% elif stat in statbox_data['27_stats'] %}
-                            {{ (nba_data.stats[stat] / statbox_data['27']) * 100 }}%
-                        {% elif stat in statbox_data['15_stats'] %}
-                            {{ (nba_data.stats[stat] / statbox_data['15']) * 100 }}%
-                        {% elif stat in statbox_data['5_stats'] %}
-                            {{ (nba_data.stats[stat] / statbox_data['5']) * 100 }}%
-                        {% else %}
-                            {{ (nba_data.stats[stat] / statbox_data['15']) * 100 }}%
-                        {% endif %};"></div>
+                    {% if stat in nba_data.stats %}
+                        <div class="bar-inner orange" style="width: 
+                            {% if stat in statbox_data['percentage_stats'] %}
+                                {{ (nba_data.stats[stat]|float / statbox_data['max_percentage']) * 100 }}%
+                            {% elif stat in statbox_data['statbox_42_stats'] %}
+                                {{ (nba_data.stats[stat]|float / statbox_data['statbox_42']) * 100 }}%
+                            {% elif stat in statbox_data['statbox_27_stats'] %}
+                                {{ (nba_data.stats[stat]|float / statbox_data['statbox_27']) * 100 }}%
+                            {% elif stat in statbox_data['statbox_15_stats'] %}
+                                {{ (nba_data.stats[stat]|float / statbox_data['statbox_15']) * 100 }}%
+                            {% elif stat in statbox_data['statbox_5_stats'] %}
+                                {{ (nba_data.stats[stat]|float / statbox_data['statbox_5']) * 100 }}%
+                            {% else %}
+                                {{ (nba_data.stats[stat]|float / statbox_data['statbox_15']) * 100 }}%
+                            {% endif %};"></div>
+                    {% else %}
+                        <!-- Optional: handle missing stat in NBA data here, e.g., display 'N/A' or zero width -->
+                        <div class="bar-inner orange" style="width: 0%;"></div>
+                    {% endif %}
                 </div>
-                <span>{{ nba_data.stats[stat] }}</span>
+                <span class="nba-stat-value">
+                    {% if stat in nba_data.stats %}
+                        {{ nba_data.stats[stat] }}
+                    {% else %}
+                        N/A  <!-- Display 'N/A' or another indicator if the stat is missing -->
+                    {% endif %}
+                </span>
             </div>
             {% endfor %}
         </div>
     </div>
+    
+    
+    
+    <br><br>
+
+    <div class="mobile-only">
+
+        <h4>Top 10 Matches</h4>
+        {{ mobile_top_10_nba_matches|safe }}
+    
+        <br><br>
+        <br><br>
+    </div>
+
     <br><br>
     
     <div class="hide-on-mobile">
@@ -440,7 +475,7 @@
     
         <br><br>
     
-        <h4>Top Matches</h4>
+        <h4>Top 10 Matches</h4>
         {{ nba_dna_matches|safe }}
     
         <br><br>
