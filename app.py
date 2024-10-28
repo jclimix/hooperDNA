@@ -26,10 +26,6 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     return render_template('index.html')
-
-@app.errorhandler(500)
-def internal_server_error(error):
-    return render_template("error.html"), 500
         
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -56,6 +52,7 @@ def results():
 
         #refactor into function/mod to be called
         # for homme, submmit, result routes
+
         college_player_name = get_college_player_name(college_player_id)
 
         college_player = csv_to_dict(college_player_csv)
@@ -166,6 +163,8 @@ def results():
             'stats': college_player,
             'player_year': college_player_year
         }
+
+        print(f'NBA Player Name: {college_data.name}')
 
         statbox_data = {
             '42': statbox_42,

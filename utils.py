@@ -1,5 +1,10 @@
 #utils.py
 
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 from scipy.spatial.distance import euclidean
 import numpy as np
@@ -195,19 +200,32 @@ def scrape_college_player_data(college_player_id, college_player, weight_profile
 
     url = f"https://www.sports-reference.com/cbb/players/{college_player_id}.html"
 
-    # Nested function to scrape stats
+    # Set up Selenium with ChromeDriver in headless mode
+    service = Service(executable_path='./misc/chromedriver-win64/chromedriver.exe')
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    options.add_experimental_option("prefs", {
+        "profile.managed_default_content_settings.images": 2,
+        "profile.managed_default_content_settings.stylesheets": 2,
+    })
+    driver = webdriver.Chrome(service=service, options=options)
+
+    # Nested function to scrape stats using Selenium
     def scrape_college_stats():
-        response = requests.get(url)
-        response.raise_for_status()
+        driver.get(url)
+        try:
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.ID, "players_per_game"))
+            )
+            html_content = driver.page_source
+            soup = BeautifulSoup(html_content, "html.parser")
+            table = soup.find("table", id="players_per_game")
 
-        soup = BeautifulSoup(response.content, "html.parser")
-        div = soup.find("div", id="div_players_per_game")
-
-        if div:
-            table = div.find("table")
             if table:
                 college_player_stats_df = pd.read_html(str(table))[0]
-
                 logger.info(f"{college_player_id} | Stats:")
                 logger.info(college_player_stats_df)
 
@@ -237,17 +255,18 @@ def scrape_college_player_data(college_player_id, college_player, weight_profile
                     logger.error("'Season' column not found in the stats table.")
             else:
                 logger.error("Table not found on the page.")
-        else:
-            logger.error("Div with player stats not found on the page.")
+        except Exception as e:
+            logger.error(f"Table load error: {e}")
         return None
 
+    # Scrape the player's height
     def scrape_college_height():
-        response = requests.get(url)
-        response.raise_for_status()
-
-        soup = BeautifulSoup(response.content, "html.parser")
-
-        # regular expression pattern to match heights (ranging from 4-0 to 8-11)
+        driver.get(url)
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.TAG_NAME, "body"))
+        )
+        html_content = driver.page_source
+        soup = BeautifulSoup(html_content, "html.parser")
         height_pattern = re.compile(r"([4-8]-\d{1,2})")
         height_element = soup.find("span", string=height_pattern)
 
@@ -259,11 +278,14 @@ def scrape_college_player_data(college_player_id, college_player, weight_profile
             logger.error("Height element not found.")
             return None
 
+    # Scrape the player's headshot
     def scrape_college_headshot():
-        response = requests.get(url)
-        response.raise_for_status()
-
-        soup = BeautifulSoup(response.content, "html.parser")
+        driver.get(url)
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.TAG_NAME, "body"))
+        )
+        html_content = driver.page_source
+        soup = BeautifulSoup(html_content, "html.parser")
         target_id = "meta"
         target_section = soup.find(id=target_id)
         college_image_link = "https://i.ibb.co/vqkzb0m/temp-player-pic.png"
@@ -287,17 +309,38 @@ def scrape_college_player_data(college_player_id, college_player, weight_profile
         logger.info(f"College player headshot link: {college_image_link}")
         return college_image_link
 
+    # Function to adjust college stats to weights
     def adjust_college_stats_to_weights():
-        college_stats = np.array(
-            [float(college_player[stat]) * weights[stat] for stat in college_player.keys()]
-        ).reshape(1, -1)
-        logger.info(f"Custom Match Profile: {selected_profile}")
-        return college_stats
+        college_stats = []
+        for stat in college_player.keys():
+            stat_value = college_player.get(stat)
+            weight = weights.get(stat, 0)  # Default weight to 0 if not found
 
+            # Ensure the stat value is a float
+            try:
+                stat_value_float = float(stat_value)
+                college_stats.append(stat_value_float * weight)
+            except (ValueError, TypeError) as e:
+                logger.error(f"Skipping stat '{stat}' due to non-float value: {stat_value} ({e})")
+
+        # Convert to numpy array if any stats were successfully processed
+        if college_stats:
+            college_stats_array = np.array(college_stats).reshape(1, -1)
+            logger.info(f"Custom Match Profile: {selected_profile}")
+            return college_stats
+        else:
+            logger.error("No valid stats found for processing.")
+            return np.array([])  # Return an empty array if no valid stats
+
+
+    # Run scraping functions and process data
     stats, college_latest_stats, college_player_stats_df = scrape_college_stats()
     height = scrape_college_height()
     headshot = scrape_college_headshot()
     weighted_stats = adjust_college_stats_to_weights()
+
+    # Close the Selenium browser
+    driver.quit()
 
     return {
         "stats": stats,
@@ -381,17 +424,29 @@ def find_nba_matches(college_player, college_latest_stats, college_stats, weight
         return None, None
 
 def compile_html_data(first_nba_match, college_latest_stats, college_player_stats_df, college_player_name, scrape_nba_player_data):
-    nba_match_player_name = first_nba_match["Player"].iloc[0]
+    if first_nba_match is None:
+        logger.error("No NBA match found. 'first_nba_match' is None.")
+        return None
+
+    # Safely access 'Player' and other attributes in 'first_nba_match'
+    nba_match_player_name = first_nba_match.get("Player").iloc[0] if "Player" in first_nba_match.columns else None
+    if nba_match_player_name is None:
+        logger.error("NBA match player name not found in 'first_nba_match'.")
+        return None
+
     nba_image_link, nba_player_height = scrape_nba_player_data(nba_match_player_name)
     
-    nba_player_position = first_nba_match["Pos"].iloc[0]
-    dna_match_percentage = first_nba_match["Similarity (%)"].iloc[0]
-    nba_match_player_year = first_nba_match["Season"].iloc[0]
+    nba_player_position = first_nba_match.get("Pos").iloc[0] if "Pos" in first_nba_match.columns else None
+    dna_match_percentage = first_nba_match.get("Similarity (%)").iloc[0] if "Similarity (%)" in first_nba_match.columns else None
 
-    dna_match_percentage = dna_match_percentage[:-1]  
-    dna_match_percentage = float(dna_match_percentage)
+    if dna_match_percentage is not None:
+        try:
+            dna_match_percentage = float(dna_match_percentage.rstrip("%"))
+        except ValueError:
+            logger.error("Failed to convert DNA match percentage to float.")
+            dna_match_percentage = None
 
-    college_player_year = college_latest_stats['Season']
+    college_player_year = college_latest_stats.get('Season', "Unknown")
 
     college_latest_stats_df = pd.DataFrame([college_latest_stats], columns=college_player_stats_df.columns)
     college_stats_to_merge = college_latest_stats_df.head(1)
@@ -404,13 +459,10 @@ def compile_html_data(first_nba_match, college_latest_stats, college_player_stat
 
     comparison_df = pd.concat([college_stats_to_merge, nba_stats_to_merge], ignore_index=True)
 
-    logger.info("Comparison DF: ")
-    logger.info(comparison_df)
-
-    comparison_df = remove_column(comparison_df, "Similarity (%)")
-    comparison_df = remove_column(comparison_df, "G")
-    comparison_df = remove_column(comparison_df, "GS")
-    comparison_df = remove_column(comparison_df, "Age")
+    # Ensure necessary columns are present before removing them
+    for col in ["Similarity (%)", "G", "GS", "Age"]:
+        if col in comparison_df.columns:
+            comparison_df = remove_column(comparison_df, col)
 
     comparison_df.at[0, 'Player'] = college_player_name
 
@@ -423,7 +475,6 @@ def compile_html_data(first_nba_match, college_latest_stats, college_player_stat
         "nba_player_height": nba_player_height,
         "nba_player_position": nba_player_position,
         "dna_match_percentage": dna_match_percentage,
-        "nba_match_player_year": nba_match_player_year,
         "college_player_year": college_player_year,
         "comparison_df": comparison_df
     }
