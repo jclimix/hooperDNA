@@ -1,11 +1,12 @@
 import os
+import time
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from unidecode import unidecode
 
 # Base URL for scraping
-base_url = 'https://www.basketball-reference.com/leagues/NBA_{year}_per_game.html#per_game_stats::pts_per_g'
+base_url = 'https://www.basketball-reference.com/leagues/NBA_{year}_per_game.html'
 
 # Directory for saving CSV files
 raw_save_dir = "./sample_DB/nba_raw_data"
@@ -29,20 +30,41 @@ column_mapping = {
 }
 
 # Initial year
-start_year = 2015
-end_year = 2024  # You can adjust this as needed
+start_year = 2011
+end_year = 2014  # You can adjust this as needed
 
 # Loop over the years
 for year in range(start_year, end_year + 1):
     # Format the URL with the current year
     url = base_url.format(year=year)
+    success = False
+    retries = 3
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
     
-    # Send an HTTP request to the URL with proper encoding
-    response = requests.get(url)
-    response.encoding = 'utf-8'  # Ensure the response is interpreted as UTF-8
+    for attempt in range(retries):
+        response = requests.get(url, headers=headers)
+        response.encoding = 'utf-8'
+        
+        # Check for successful response
+        if response.status_code == 200:
+            success = True
+            break
+        elif response.status_code == 429:
+            print(f"Rate limit hit for year {year}. Retrying in {2 ** attempt} seconds...")
+            time.sleep(2 ** attempt)
+        else:
+            print(f"Failed to retrieve the webpage for year {year}. Status code: {response.status_code}")
+            break
+    
+    if not success:
+        print(f"Skipping year {year} due to repeated errors.")
+        continue
 
-    # Parse the HTML content of the page
-    soup = BeautifulSoup(response.text, 'html.parser')
+    # Store HTML content in memory
+    html_content = response.text
+    soup = BeautifulSoup(html_content, 'html.parser')
     
     # Find the table with the specified ID
     table = soup.find('table', id='per_game_stats')
@@ -73,3 +95,6 @@ for year in range(start_year, end_year + 1):
         print(f"Data for year {year} saved: Raw ({raw_csv_file}), Clean ({clean_csv_file})")
     else:
         print(f"Table with the specified ID not found for year {year}.")
+    
+    # Delay to avoid hitting rate limits
+    time.sleep(2)  # Adjust delay as needed

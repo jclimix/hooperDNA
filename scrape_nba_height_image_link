@@ -1,0 +1,85 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import re
+import logging
+from dotenv import load_dotenv
+import os, logging, boto3, pandas as pd, io
+
+
+# Set up logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+
+load_dotenv('../secrets/s3-hooperdna/.env')
+
+def read_csv_from_s3(bucket_name, key):
+
+    s3 = boto3.client('s3', region_name=os.getenv('AWS_REGION'))
+
+    obj = s3.get_object(Bucket=bucket_name, Key=key)
+    df = pd.read_csv(io.BytesIO(obj['Body'].read()))
+    return df
+
+def scrape_nba_player_data(nba_match_player_name):
+
+    # Read player ID data from S3
+    df = read_csv_from_s3('hooperdna-storage', 'nba_player_data/nba_players_n_ids.csv')
+    
+    # Find the player ID based on the name
+    player_row = df[df["playerName"].str.lower() == nba_match_player_name.lower()]
+    if player_row.empty:
+        logger.error(f"No player found with name '{nba_match_player_name}'.")
+        return None, None
+
+    nba_player_id = player_row["playerId"].values[0]
+    first_char_nba_id = nba_player_id[0]
+
+    # Construct the player's URL
+    url = f"https://www.basketball-reference.com/players/{first_char_nba_id}/{nba_player_id}.html"
+
+    # Default values for image link and height
+    img_link = "https://i.ibb.co/vqkzb0m/temp-player-pic.png"
+    height = None
+
+    try:
+        # Request and parse the HTML content
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        html_content = response.text
+
+        # Parse the HTML content with BeautifulSoup
+        soup = BeautifulSoup(html_content, "html.parser")
+
+        # Find the 'meta' section for both the image link and height
+        metadata = soup.find(id="meta")
+
+        if metadata:
+            # Extract image link if available
+            media_items = metadata.find_all("div", class_="media-item")
+            for item in media_items:
+                img_tag = item.find("img")
+                if img_tag and "src" in img_tag.attrs:
+                    img_link = img_tag["src"]
+                    break
+
+            # Extract height from metadata text
+            height_pattern = re.compile(r'([4-8]-\d{1,2})')
+            height_match = height_pattern.search(metadata.text)
+            if height_match:
+                height = height_match.group(0)
+            else:
+                logger.warning("Height pattern not found in metadata.")
+        else:
+            logger.error(f"No metadata section found on the page for player ID '{nba_player_id}'.")
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error while retrieving the webpage: {e}")
+        return None, None
+
+    return img_link, height
+
+image, height = scrape_nba_player_data("LeBron James")
+print(height)
+print(image)

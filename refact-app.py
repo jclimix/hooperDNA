@@ -1,179 +1,120 @@
-import pandas as pd
-import random
 import numpy as np
+import os
+import requests
+from bs4 import BeautifulSoup
+import re
+import csv
+import json
+from dotenv import load_dotenv
+import os, logging, boto3, pandas as pd, io
+from loguru import logger
+import random
 import requests
 import re
 from bs4 import BeautifulSoup
+import logging
+from dotenv import load_dotenv
 
-def scrape_college_data(id):
-        
-    # Step 1: Download the webpage and store the content in memory
-    url = f'https://www.sports-reference.com/cbb/players/{id}.html'  # Replace with the actual URL
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+load_dotenv('../secrets/s3-hooperdna/.env')
+
+def read_csv_from_s3(bucket_name, key):
+
+    s3 = boto3.client('s3', region_name=os.getenv('AWS_REGION'))
+
+    obj = s3.get_object(Bucket=bucket_name, Key=key)
+    df = pd.read_csv(io.BytesIO(obj['Body'].read()))
+    return df
+
+def get_college_player_name(player_id):
+    df = read_csv_from_s3('hooperdna-storage', 'college_data/college_basketball_players.csv')
+    row = df[df["playerId"] == player_id]
+    return row["playerName"].values[0] if not row.empty else None
+
+def scrape_college_data(player_id):
+    
+    url = f'https://www.sports-reference.com/cbb/players/{player_id}.html'
     response = requests.get(url)
+    
+    # Return early if the request fails
+    if response.status_code != 200:
+        logger.error("Failed to retrieve the webpage. Status code: %s", response.status_code)
+        return None, None, "https://i.ibb.co/vqkzb0m/temp-player-pic.png"
 
-    # Check if the request was successful
-    if response.status_code == 200:
-        # Store the content directly in memory
-        content = response.text
+    content = response.text
+    soup = BeautifulSoup(content, 'html.parser')
+    
+    # Step 1: Extract the player's height
+    height_pattern = re.compile(r"([4-8]-\d{1,2})")
+    height_element = soup.find("span", string=height_pattern)
+    college_player_height = height_element.text.strip() if height_element else None
+    if college_player_height:
+        logger.info(f"College player height: {college_player_height}")
     else:
-        print("Failed to retrieve the webpage. Status code:", response.status_code)
-        exit()
-
-    # Step 2: Use regex to find the JavaScript block containing the target div
-    # The regex pattern searches for the div with id 'div_players_per_game' and captures the HTML content within it
+        logger.error("Height element not found.")
+    
+    # Step 2: Extract the player stats table (no changes made here)
     pattern = r'<div class="table_container tabbed current" id="div_players_per_game">(.*?)</div>'
     matches = re.search(pattern, content, re.DOTALL)
 
-    # Check if the pattern was found
     if matches:
-        # Extract the div's content (which includes the table HTML)
         div_content = matches.group(1)
-        
-        # Step 3: Parse the extracted HTML snippet to find the table
         soup = BeautifulSoup(div_content, 'html.parser')
         table = soup.find('table')
-        
+
         if table:
-            # Step 4: Convert the HTML table to a DataFrame
             df = pd.read_html(str(table))[0]  # [0] gets the first table
-
-            df = df.iloc[[-2]]
-            
-            #print(df)
-            return df
-        
+            df = df.iloc[[-2]]  # Extract the most recent season stats
         else:
-            print("Table not found within the extracted div content.")
+            logger.error("Table not found within the extracted div content.")
+            df = None
     else:
-        print("Div with id 'div_players_per_game' not found in the JavaScript.")
-
-def create_college_player():
-    # Define the data for a sample player
-    data = {
-        "Season": ["2021-22", "2022-23", "2023-24"],
-        "Team": ["Duke", "Duke", "Duke"],
-        "Conf": ["ACC", "ACC", "ACC"],
-        "Class": ["Freshman", "Freshman", "Sophomore"],
-        "Pos": ["G", "G", "G"],
-        #"G": [25, 29, 30],
-        #"GS": [15, 20, 28],
-        #"MP": [25.3, 30.1, 32.4],
-        "FG": [4.2, 5.9, 6.5],
-        "FGA": [10.5, 12.3, 13.2],
-        "FG%": [40.0, 48.0, 49.2],
-        #"3P": [1.8, 2.0, 2.3],
-        #"3PA": [4.0, 5.3, 5.8],
-        #"3P%": [32.1, 37.5, 39.7],
-        "2P": [2.4, 3.9, 4.2],
-        "2PA": [6.5, 7.0, 7.4],
-        "2P%": [51.5, 55.7, 56.8],
-        #"eFG%": [48.0, 52.6, 54.9],
-        "FT": [2.1, 3.0, 2.8],
-        "FTA": [2.8, 3.7, 3.5],
-        "FT%": [75.0, 81.1, 80.2],
-        #"ORB": [0.9, 1.0, 1.2],
-        #"DRB": [2.8, 3.3, 3.5],
-        "TRB": [3.7, 4.3, 4.7],
-        "AST": [3.1, 4.8, 5.2],
-        "STL": [1.0, 1.5, 1.8],
-        #"BLK": [0.3, 0.6, 0.5],
-        #"TOV": [2.0, 2.5, 2.2],
-        "PF": [1.8, 2.1, 2.3],
-        "PTS": [13.4, 16.8, 17.8],
-        "Awards": ["None", "Freshman of the Year", "All-ACC"]
-    }
-
-    # Create DataFrame
-    df = pd.DataFrame(data)
+        logger.error("Div with id 'div_players_per_game' not found.")
+        df = None
     
-    # Sort DataFrame by 'Season' column in ascending order to have older years at the top
-    df = df.sort_values(by="Season", ascending=True).reset_index(drop=True)
+    soup = BeautifulSoup(content, 'html.parser')
+    target_id = "meta"
+    target_section = soup.find(id=target_id)
+    college_image_link = "https://i.ibb.co/vqkzb0m/temp-player-pic.png"  # Default image link
 
-    df = df.iloc[[-1]]
+    if target_section:
+        media_items = target_section.find_all("div", class_="media-item")
+
+        if media_items:
+            for index, item in enumerate(media_items, 1):
+                img_tag = item.find("img")
+                if img_tag and "src" in img_tag.attrs:
+                    college_image_link = img_tag["src"]
+                    logger.info(f"College player headshot link found: {college_image_link}")
+                    break
+                else:
+                    logger.error(f"Image {index}: No image found.")
+        else:
+            logger.error(f"No media items found in the section with id '{target_id}'.")
+    else:
+        logger.error(f"No section found with id '{target_id}'.")
+
+    return college_player_height, df, college_image_link
+
+def adjust_stats(df):
+
+    columns_to_adjust = [
+        'MP', 'FG', 'FGA', 'FG%', '3P', '3PA', '3P%', '2P', '2PA', '2P%', 
+        'eFG%', 'FT', 'FTA', 'FT%', 'ORB', 'DRB', 'TRB', 'AST', 'STL', 
+        'BLK', 'TOV', 'PF', 'PTS'
+    ]
     
-    return df
-
-def create_random_nba_players(num_players=10):
-    # Define potential values for categorical data
-    teams = ["Lakers", "Warriors", "Celtics", "Bulls", "Heat", "Nets"]
-    positions = ["PG", "SG", "SF", "PF", "C"]
-    awards_list = ["All-Star", "MVP", "Defensive Player of the Year", "All-NBA First Team", "Most Improved Player", "None"]
-
-    # Create empty list to store player data
-    players_data = []
-
-    for _ in range(num_players):
-        # Randomly generate data for a player
-        season = f"{random.randint(2018, 2023)}-{random.randint(19, 24)}"
-        team = random.choice(teams)
-        pos = random.choice(positions)
-        g = random.randint(60, 82)  # Games played
-        gs = g  # Assume all games played were starts for simplicity
-        mp = round(random.uniform(20.0, 38.0), 1)  # Minutes per game
-        fg = round(random.uniform(5.0, 12.0), 1)  # Field goals made
-        fga = round(fg + random.uniform(5.0, 10.0), 1)  # Field goals attempted
-        fg_percent = round((fg / fga) * 100, 1) if fga > 0 else 0  # FG%
-        three_p = round(random.uniform(1.0, 3.5), 1)  # 3-pointers made
-        three_pa = round(three_p + random.uniform(1.0, 4.0), 1)  # 3-pointers attempted
-        three_p_percent = round((three_p / three_pa) * 100, 1) if three_pa > 0 else 0  # 3P%
-        two_p = round(fg - three_p, 1)  # 2-pointers made
-        two_pa = round(fga - three_pa, 1)  # 2-pointers attempted
-        two_p_percent = round((two_p / two_pa) * 100, 1) if two_pa > 0 else 0  # 2P%
-        efg_percent = round(((fg + 0.5 * three_p) / fga) * 100, 1) if fga > 0 else 0  # eFG%
-        ft = round(random.uniform(2.0, 7.0), 1)  # Free throws made
-        fta = round(ft + random.uniform(0.5, 2.0), 1)  # Free throws attempted
-        ft_percent = round((ft / fta) * 100, 1) if fta > 0 else 0  # FT%
-        orb = round(random.uniform(0.5, 2.5), 1)  # Offensive rebounds
-        drb = round(random.uniform(2.0, 8.0), 1)  # Defensive rebounds
-        trb = round(orb + drb, 1)  # Total rebounds
-        ast = round(random.uniform(1.0, 10.0), 1)  # Assists
-        stl = round(random.uniform(0.5, 2.5), 1)  # Steals
-        blk = round(random.uniform(0.5, 2.0), 1)  # Blocks
-        tov = round(random.uniform(1.0, 4.0), 1)  # Turnovers
-        pf = round(random.uniform(1.0, 3.5), 1)  # Personal fouls
-        pts = round((fg * 2) + (three_p * 3) + ft, 1)  # Points
-        awards = random.choice(awards_list)  # Random award or none
-
-        # Append data to the list
-        players_data.append({
-            "Season": season,
-            "Team": team,
-            "Pos": pos,
-            "G": g,
-            "GS": gs,
-            "MP": mp,
-            "FG": fg,
-            "FGA": fga,
-            "FG%": fg_percent,
-            "3P": three_p,
-            "3PA": three_pa,
-            "3P%": three_p_percent,
-            "2P": two_p,
-            "2PA": two_pa,
-            "2P%": two_p_percent,
-            "eFG%": efg_percent,
-            "FT": ft,
-            "FTA": fta,
-            "FT%": ft_percent,
-            "ORB": orb,
-            "DRB": drb,
-            "TRB": trb,
-            "AST": ast,
-            "STL": stl,
-            "BLK": blk,
-            "TOV": tov,
-            "PF": pf,
-            "PTS": pts,
-            "Awards": awards
-        })
-
-    # Create DataFrame
-    df = pd.DataFrame(players_data)
+    # Create a copy of the DataFrame to avoid modifying the original
+    adjusted_df = df.copy()
     
-    # Sort by season for clarity
-    df = df.sort_values(by="Season").reset_index(drop=True)
-    
-    return df
+    # Multiply each specified column by 1.18 if it exists in the DataFrame
+    for col in columns_to_adjust:
+        if col in adjusted_df.columns:
+            adjusted_df[col] = adjusted_df[col] * 1.2
+            
+    return adjusted_df
 
 def create_weights_df(profile):
 
@@ -205,7 +146,6 @@ def create_weights_df(profile):
 
 def calculate_dna_match(college_player_df, nba_players_df, weights_df):
 
-    
     if len(college_player_df) != 1:
         raise ValueError("college_player_df should contain only one row.")
 
@@ -257,17 +197,142 @@ def calculate_dna_match(college_player_df, nba_players_df, weights_df):
 
     return nba_filtered_df.sort_values(by="DNA Match", ascending=False).reset_index(drop=True)
 
-college_player_id = 'zach-edey-1'
-selected_profile = 'defense'
 
-college_player_stats_df = scrape_college_data(college_player_id)
+def load_nba_data(year):
+    df = read_csv_from_s3('hooperdna-storage', f'nba_raw_data/{year}_NBAPlayerStats_HprDNA_raw.csv')
+    return df
+
+def find_matches_before_college_player(year):
+        
+    # Initialize all_nba_matches as an empty DataFrame
+    all_nba_matches = pd.DataFrame()
+
+    year = int(year[:4])
+    last_n_years = 20
+
+    if (year - last_n_years) < 1970:
+        start_year = 1970
+    else:
+        start_year = year - last_n_years
+    end_year = year
+
+    for year in range(start_year, end_year):
+
+        # Load NBA data for the specific year
+        nba_players_df = load_nba_data(year=year)
+
+        # Calculate DNA match
+        nba_with_dna_match = calculate_dna_match(adjusted_college_stats_df, nba_players_df, weights_df)
+        
+        # Select the top match
+        top_nba_match = nba_with_dna_match.iloc[[0]]
+
+        # Add any missing columns from top_nba_match to all_nba_matches
+        for col in top_nba_match.columns:
+            if col not in all_nba_matches.columns:
+                all_nba_matches[col] = 0
+
+        # Append the top match to all_nba_matches
+        all_nba_matches = pd.concat([all_nba_matches, top_nba_match], ignore_index=True)
+    
+    all_nba_matches = all_nba_matches.sort_values(by="DNA Match", ascending=False)
+
+    return all_nba_matches
+
+
+def scrape_nba_player_data(nba_match_player_name):
+
+    # Read player ID data from S3
+    df = read_csv_from_s3('hooperdna-storage', 'nba_player_data/nba_players_n_ids.csv')
+    
+    # Find the player ID based on the name
+    player_row = df[df["playerName"].str.lower() == nba_match_player_name.lower()]
+    if player_row.empty:
+        logger.error(f"No player found with name '{nba_match_player_name}'.")
+        return None, None
+
+    nba_player_id = player_row["playerId"].values[0]
+    first_char_nba_id = nba_player_id[0]
+
+    # Construct the player's URL
+    url = f"https://www.basketball-reference.com/players/{first_char_nba_id}/{nba_player_id}.html"
+
+    # Default values for image link and height
+    img_link = "https://i.ibb.co/vqkzb0m/temp-player-pic.png"
+    height = None
+
+    try:
+        # Request and parse the HTML content
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        html_content = response.text
+
+        # Parse the HTML content with BeautifulSoup
+        soup = BeautifulSoup(html_content, "html.parser")
+
+        # Find the 'meta' section for both the image link and height
+        metadata = soup.find(id="meta")
+
+        if metadata:
+            # Extract image link if available
+            media_items = metadata.find_all("div", class_="media-item")
+            for item in media_items:
+                img_tag = item.find("img")
+                if img_tag and "src" in img_tag.attrs:
+                    img_link = img_tag["src"]
+                    break
+
+            # Extract height from metadata text
+            height_pattern = re.compile(r'([4-8]-\d{1,2})')
+            height_match = height_pattern.search(metadata.text)
+            if height_match:
+                height = height_match.group(0)
+            else:
+                logger.warning("Height pattern not found in metadata.")
+        else:
+            logger.error(f"No metadata section found on the page for player ID '{nba_player_id}'.")
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error while retrieving the webpage: {e}")
+        return None, None
+
+    return img_link, height
+
+college_player_id = 'zach-edey-1'
+selected_profile = 'offense'
+
+college_player_name = get_college_player_name(college_player_id)
+print(f"College Player Name: {college_player_name}")
+
+college_player_height, college_player_stats_df, college_headshot_link = scrape_college_data(college_player_id)
 print(college_player_stats_df)
 
-nba_players_df = create_random_nba_players()
-print(nba_players_df)
+adjusted_college_stats_df = adjust_stats(college_player_stats_df)
+print(adjusted_college_stats_df)
+
+college_player_season = str(college_player_stats_df['Season'].values[0])
+college_player_position = str(college_player_stats_df['Pos'].values[0])
+print(f"College Player Season: {college_player_season}")
+print(f"College Player Position: {college_player_position}")
 
 weights_df = create_weights_df(selected_profile)
-print(weights_df)
+#print(weights_df)
 
-nba_with_dna_match = calculate_dna_match(college_player_stats_df, nba_players_df, weights_df)
-print(nba_with_dna_match)
+all_nba_matches = find_matches_before_college_player(college_player_season)
+top_10_nba_matches = all_nba_matches.head(10)
+
+with pd.option_context('display.max_columns', None):
+    print(top_10_nba_matches)
+
+top_1_nba_match_name = top_10_nba_matches["Player"].iloc[0]
+top_1_nba_match_season = top_10_nba_matches["Season"].iloc[0]
+top_1_nba_match_pos = top_10_nba_matches["Pos"].iloc[0]
+
+print(f"Top NBA Match Name: {top_1_nba_match_name}")
+print(f"Top NBA Match Season: {top_1_nba_match_season}")
+print(f"Top NBA Match Position: {top_1_nba_match_pos}")
+
+top_1_nba_match_headshot_link, top_1_nba_match_height = scrape_nba_player_data(top_1_nba_match_name)
+
+print(f"Top NBA Match Height: {top_1_nba_match_height}")
+print(f"Top NBA Match Headshot Link: {top_1_nba_match_headshot_link}")
