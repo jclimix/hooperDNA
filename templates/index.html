@@ -1,5 +1,6 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,18 +14,20 @@
     <style>
         body {
             font-family: 'Oswald', sans-serif;
+            font-size: 13pt;
             background-color: #272727;
             margin: 0;
             padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            height: auto;
+            /* Change from 100vh to auto */
+            min-height: 100vh;
+            /* Ensures full viewport height but allows scrolling */
             background-image: url('https://i.ibb.co/Xpfm776/collegemashblue.png');
             background-size: cover;
             background-position: center;
-            background-repeat: no-repeat; 
+            background-repeat: no-repeat;
         }
+
         .logo-container {
             display: flex;
             flex-direction: column;
@@ -37,16 +40,16 @@
             max-height: 180px;
             width: auto;
             height: auto;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .container {
             text-align: center;
-            background-color: rgb(24, 24, 24);
-            padding: 30px;
-            border-radius: 10px;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 20px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            width: 400px;
+            width: 450px;
         }
 
         h1 {
@@ -79,13 +82,15 @@
             cursor: pointer;
             border-bottom: 1px solid #eee;
             transition: background-color 0.2s;
+            color: black;
         }
 
         .dropdown-list div:hover {
             background-color: #f0f0f0;
         }
 
-        #player-input, #selected_profile {
+        #player-input,
+        #selected_profile {
             width: 100%;
             padding: 10px;
             margin-bottom: 15px;
@@ -126,49 +131,241 @@
             background-color: #218838;
         }
 
+        .player-search-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 950px;
+            /* Adjust width as needed */
+            margin: 0 auto;
+        }
+
+        .form-container {
+            padding: 20px;
+            border-radius: 8px;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 20px;
+            /* Space between form and player info */
+        }
+
+        .player-info-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            /* Space between player cards */
+        }
+
+        .player-card {
+            text-align: center;
+            color: #fff;
+        }
+
+        .player-card img {
+            width: 100px;
+            /* Adjust as needed */
+            height: auto;
+            border-radius: 8px;
+        }
+
+        /* Full-screen loading overlay */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.8);
+            /* Semi-transparent black background */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Oswald', sans-serif;
+            font-size: 20px;
+            z-index: 10000;
+            /* Ensure it stays on top of all content */
+            visibility: hidden;
+            /* Hidden by default */
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Spinner animation */
+        .spinner {
+            border: 8px solid rgba(255, 255, 255, 0.2);
+            /* Light transparent border */
+            border-top: 8px solid #ffffff;
+            /* Solid white top border */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        /* Spinner keyframes */
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Show loading screen */
+        #loading-screen.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+
+            /* Adjust max-width as needed for mobile breakpoints */
+            .container {
+                transform: scale(0.8);
+                margin-left: 100px;
+                /* Shrinks to 80% of original size */
+                transform-origin: top left;
+                /* Sets the origin for scaling */
+            }
+        }
     </style>
 </head>
+
 <body>
+    <!-- Loading Screen Overlay -->
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
 
+    <!-- Site Logo // headers-->
+    <br><br>
     <div class="logo-container">
-        <img src="https://i.ibb.co/3SvXSwQ/Hooper-DNA-1-removebg.png" alt="Hooper-DNA-logo" border="0" style="height: 190px; width: auto; display: block;">
-    
+        <img src="https://i.ibb.co/3SvXSwQ/Hooper-DNA-1-removebg.png" alt="Hooper-DNA-logo"
+            style="height: 190px; width: 190px; display: block;">
+        <br>
         <div class="container">
-            <h1>Player Search</h1>
+            <div class="player-search-container">
+                <div class="form-container">
+                    <h1>Player Search</h1>
 
-            <!-- Player search form -->
-            <form id="playerForm" method="POST" action="/submit">
-                <div class="dropdown-container">
-                    <input type="text" id="player-input" placeholder="Start typing a player's name..." autocomplete="off">
-                    <div id="dropdown-list" class="dropdown-list" style="display:none;"></div>
+                    <!-- Player search form -->
+                    <form id="playerForm" method="POST" action="/submit">
+                        <div class="dropdown-container">
+                            <input type="text" id="player-input" placeholder="Start typing a player's name..."
+                                autocomplete="off">
+                            <div id="dropdown-list" class="dropdown-list" style="display:none;"></div>
+                        </div>
+
+                        <!-- Hidden field for player ID -->
+                        <input type="hidden" id="player_id" name="player_id">
+
+                        <select id="selected_profile" name="selected_profile">
+                            <option value="offense">Offense</option>
+                            <option value="defense">Defense</option>
+                            <option selected value="balanced">Balanced</option>
+                        </select>
+
+                        <!-- Submit button -->
+                        <button type="submit" formmethod="post">Find DNA Match</button>
+                    </form>
+
+                    <!-- Google Doc button -->
+                    <a href="https://docs.google.com/document/d/16ZT--az650_cqev4-6eHGdSkLtlgf3suRpujZgElr_k/edit?usp=sharing"
+                        target="_blank">
+                        <button class="google-doc-btn">G-Documentation</button>
+                    </a>
+
+                    <br>
+
+                    <span
+                        style="color: white; font-weight: bold; text-align: center; display: block; font-family: 'Oswald', sans-serif; margin-top: 15px;">
+                        Please allow up to 30 seconds for your comparison to load...
+                    </span>
                 </div>
 
-                <!-- Hidden field for player ID -->
-                <input type="hidden" id="player_id" name="player_id">
+                <!-- Players To Try Section -->
+                <div class="player-info-container">
 
-                <select id="selected_profile" name="selected_profile">
-                    <option value="offense">Offense</option>
-                    <option value="defense">Defense</option>
-                    <option selected value="balanced">Balanced</option>
-                </select>
+                    <div class="player-card">
+                        <h2>Zach Edey<br>(2023-24)</h2>
+                        <a
+                            href="https://hooperdna.universe-j.com/results?player_id=zach-edey-1&selected_profile=balanced">
+                            <img src="https://www.sports-reference.com/req/202302071/cbb/images/players/zach-edey-1.jpg"
+                                alt="college_player">
+                        </a>
+                        <p>Position: C</p>
+                        <p>Team: Purdue</p>
+                    </div>
 
-                <!-- Submit button -->
-                <button type="submit" formmethod="post">Find DNA Match</button>
-            </form>
+                    <div class="player-card">
+                        <h2>Magic Johnson<br>(1978-79)</h2>
+                        <a
+                            href="https://hooperdna.universe-j.com/results?player_id=magic-johnson-1&selected_profile=balanced">
+                            <img src="https://www.sports-reference.com/req/202302071/cbb/images/players/magic-johnson-1.jpg"
+                                alt="college_player">
+                        </a>
+                        <p>Position: G</p>
+                        <p>Team: Michigan State</p>
+                    </div>
 
-            <!-- Google Doc button -->
-            <a href="https://docs.google.com/document/d/16ZT--az650_cqev4-6eHGdSkLtlgf3suRpujZgElr_k/edit?usp=sharing" target="_blank">
-                <button class="google-doc-btn">G-Documentation</button>
-            </a>
+                    <div class="player-card">
+                        <h2>Caitlin Clark<br>(2023-24)</h2>
+                        <a
+                            href="https://hooperdna.universe-j.com/results?player_id=caitlin-clark-1&selected_profile=balanced">
+                            <img src="https://www.sports-reference.com/req/202302071/cbb/images/players/caitlin-clark-1.jpg"
+                                alt="college_player">
+                        </a>
+                        <p>Position: G</p>
+                        <p>Team: Iowa</p>
+                    </div>
 
+                    <div class="player-card">
+                        <h2>Keegan Murray<br>(2021-22)</h2>
+                        <a
+                            href="https://hooperdna.universe-j.com/results?player_id=keegan-murray-1&selected_profile=balanced">
+                            <img src="https://www.sports-reference.com/req/202302071/cbb/images/players/keegan-murray-1.jpg"
+                                alt="college_player">
+                        </a>
+                        <p>Position: F</p>
+                        <p>Team: Iowa</p>
+                    </div>
+
+                    <div class="player-card">
+                        <h2>Patrick Ewing<br>(1984-85)</h2>
+                        <a
+                            href="https://hooperdna.universe-j.com/results?player_id=patrick-ewing-1&selected_profile=balanced">
+                            <img src="https://www.sports-reference.com/req/202302071/cbb/images/players/patrick-ewing-1.jpg"
+                                alt="college_player">
+                        </a>
+                        <p>Position: C</p>
+                        <p>Team: Georgetown</p>
+                    </div>
+
+                    <div class="player-card">
+                        <h2>Dwyane Wade<br>(2002-03)</h2>
+                        <a
+                            href="https://hooperdna.universe-j.com/results?player_id=dwyane-wade-1&selected_profile=balanced">
+                            <img src="https://www.sports-reference.com/req/202302071/cbb/images/players/dwyane-wade-1.jpg"
+                                alt="college_player">
+                        </a>
+                        <p>Position: G</p>
+                        <p>Team: Marquette</p>
+                    </div>
+                </div>
+            </div>
             <br>
-
-            <span style="color: white; font-weight: bold; text-align: center; display: block; font-family: 'Oswald', sans-serif; margin-top: 15px;">
-                Please allow up to 30 seconds for your comparison to load...
-              </span>
-
         </div>
     </div>
+
+    <br><br><br>
+
 
     <script>
         console.log('JavaScript loaded');
@@ -176,7 +373,7 @@
         let filteredPlayers = [];
 
         // Fetching player data on page load
-        window.onload = async function() {
+        window.onload = async function () {
             try {
                 const response = await fetch('./static/players.json');  // Update with actual path to your JSON file
                 if (!response.ok) {
@@ -190,7 +387,7 @@
         };
 
         // Search and filter player names as user types
-        document.getElementById('player-input').addEventListener('input', function() {
+        document.getElementById('player-input').addEventListener('input', function () {
             const query = this.value.toLowerCase();
             const dropdown = document.getElementById('dropdown-list');
 
@@ -225,9 +422,9 @@
         // Handle form submission
         let isSubmitting = false;
 
-        document.getElementById('playerForm').addEventListener('submit', function(e) {
+        document.getElementById('playerForm').addEventListener('submit', function (e) {
             console.log('Submit event captured!');
-            
+
             // No need to preventDefault here; we allow the form to submit as usual
             if (isSubmitting) {
                 return;  // Prevent multiple submissions
@@ -249,10 +446,71 @@
             isSubmitting = false;  // Reset the flag after submission (form will submit naturally)
         });
 
+    </script>
 
+    <script>
+        // Select the loading screen element
+        const loadingScreen = document.getElementById('loading-screen');
 
+        // Show loading screen when navigating between pages
+        function showLoadingScreen() {
+            loadingScreen.classList.add('active');
+        }
+
+        // Attach event listener to all links
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function (event) {
+                // Prevent loading screen on links with target="_blank"
+                if (!link.target || link.target === '_self') {
+                    event.preventDefault(); // Prevent the default action
+                    showLoadingScreen();    // Show loading screen
+
+                    // Delay navigation slightly to show the loading screen
+                    setTimeout(() => {
+                        window.location.href = link.href;
+                    }, 300);
+                }
+            });
+        });
+
+        // Show loading screen on page unload or beforeunload
+        window.addEventListener('beforeunload', showLoadingScreen);
+
+        // Show loading screen when navigating between pages
+        function showLoadingScreen() {
+            document.getElementById('loading-screen').classList.add('active');
+        }
+
+        // Attach event listener to all links
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function (event) {
+                if (!link.target || link.target === '_self') {
+                    event.preventDefault(); // Prevent the default action
+                    showLoadingScreen();    // Show loading screen
+                    setTimeout(() => {
+                        window.location.href = link.href;
+                    }, 300);
+                }
+            });
+        });
+
+        // Show loading screen on page unload
+        window.addEventListener('beforeunload', showLoadingScreen);
+
+        // Hide loading screen on page load and on "Back" navigation
+        window.addEventListener('load', () => {
+            document.getElementById('loading-screen').classList.remove('active');
+        });
+
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) { // Page loaded from cache
+                document.getElementById('loading-screen').classList.remove('active');
+            }
+        });
 
     </script>
 
+
 </body>
+
 </html>

@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet">
 
     <style>
-
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap');
 
@@ -77,7 +76,8 @@
         .image-container img {
             max-width: 90px;
             height: auto;
-            border: 3px solid #000000; /* Blue border */
+            border: 3px solid #000000;
+            /* Blue border */
             border-radius: 10px;
         }
 
@@ -166,8 +166,8 @@
             background-image: url('https://i.ibb.co/Xpfm776/collegemashblue.png');
             background-size: cover;
             background-position: center;
-            background-repeat: no-repeat; 
-            
+            background-repeat: no-repeat;
+
         }
 
         p {
@@ -177,56 +177,77 @@
         }
 
         table {
-            border-collapse: separate; /* Separate borders for modern look */
-            border-spacing: 0; /* No spacing between table cells */
-            max-width: 100px; /* Increased max-width for more content */
-            width: 80%; /* 80% of the container width */
-            margin: 20px auto; /* Center the table with some margin */
-            border-radius: 10px; /* Smooth rounded corners */
+            border-collapse: separate;
+            /* Separate borders for modern look */
+            border-spacing: 0;
+            /* No spacing between table cells */
+            max-width: 100px;
+            /* Increased max-width for more content */
+            width: 80%;
+            /* 80% of the container width */
+            margin: 20px auto;
+            /* Center the table with some margin */
+            border-radius: 10px;
+            /* Smooth rounded corners */
             overflow: hidden;
-            background-color: #fff; /* White background */
+            background-color: #fff;
+            /* White background */
         }
 
-        th, td {
-            padding: 6px 8px; /* Increased padding for better spacing */
+        th,
+        td {
+            padding: 6px 8px;
+            /* Increased padding for better spacing */
             text-align: left;
             background-color: #fff;
             color: #333;
             font-family: 'Roboto', sans-serif;
-            font-size: 12px; /* Font size for a cleaner look */
+            font-size: 12px;
+            /* Font size for a cleaner look */
         }
 
         th {
-            background-color: #19212a; /* Accent header color */
-            color: #fff; /* White text for contrast */
+            background-color: #19212a;
+            /* Accent header color */
+            color: #fff;
+            /* White text for contrast */
             font-weight: bold;
-            text-transform: uppercase; /* Uppercase for modern feel */
+            text-transform: uppercase;
+            /* Uppercase for modern feel */
             font-size: 12px;
-            letter-spacing: 0.5px; /* Spacing for a clean look */
+            letter-spacing: 0.5px;
+            /* Spacing for a clean look */
         }
 
         tr:nth-child(even) {
-            background-color: #f9f9f9; /* Lighter background for alternating rows */
+            background-color: #f9f9f9;
+            /* Lighter background for alternating rows */
         }
 
         @media (min-width: 769px) {
             .mobile-only {
-                display: none; /* Hide the element on larger screens */
+                display: none;
+                /* Hide the element on larger screens */
             }
         }
+
         @media screen and (max-width: 768px) {
             .mobile-only {
                 display: block;
             }
+
             .hide-on-mobile {
-                display: none 
+                display: none
             }
+
             .image-container img {
                 max-width: 90px;
                 height: auto;
-                border: 2px solid #000000; /* Blue border */
+                border: 2px solid #000000;
+                /* Blue border */
                 border-radius: 10px;
             }
+
             .progress-container {
                 width: 60%;
                 margin: 20px auto;
@@ -243,6 +264,7 @@
                 width: 0;
                 transition: width 1s ease-out;
             }
+
             .progress-percentage {
                 text-align: center;
                 color: #fff;
@@ -251,6 +273,7 @@
                 line-height: 30px;
                 font-family: 'Archivo Black', sans-serif;
             }
+
             .container {
                 width: 40%;
                 display: flex;
@@ -348,8 +371,8 @@
                 background-image: url('https://i.ibb.co/Xpfm776/collegemashblue.png');
                 background-size: cover;
                 background-position: center;
-                background-repeat: no-repeat; 
-                
+                background-repeat: no-repeat;
+
             }
 
             p {
@@ -367,7 +390,7 @@
             <img src="https://i.ibb.co/3SvXSwQ/Hooper-DNA-1-removebg.png" alt="Hooper-DNA-logo" border="0">
         </a>
     </div>
-    
+
     <div class="image-container">
         <div style="text-align: center;">
             <h2>{{ college_data.name }}<br>({{ college_data.player_year }})</h2>
@@ -375,7 +398,7 @@
             <p>Position: {{ college_data.position }}</p>
             <p>Height: {{ college_data.height }}</p>
         </div>
-    
+
         <div style="text-align: center;">
             <h2>{{ nba_data.name }}<br>({{ nba_data.match_year }})</h2>
             <img src="{{ nba_data.image_link }}" alt="nba_player">
@@ -383,19 +406,19 @@
             <p>Height: {{ nba_data.height }}</p>
         </div>
     </div>
-    
+
     <!-- Progress Bar -->
     <div class="progress-container">
         <div class="progress-bar" style="width: {{ nba_data.dna_match_percentage }}%;">
             <div class="progress-percentage">{{ nba_data.dna_match_percentage }}% MATCH</div>
         </div>
     </div>
-    
+
     <br><br>
-    
+
     <h1>Match Profile:</h1>
     <h3>{{ selected_profile }}</h3>
-    
+
     <div class="container">
         <div class="comparison-chart">
             {% for stat, value in college_stats.items() %}
@@ -419,11 +442,11 @@
                         {% endif %};"></div>
                 </div>
                 <span class="stat-label">{{ stat.upper() }}</span>
-                
+
                 <!-- Display NBA Player Stat -->
                 <div class="stat-bar">
                     {% if stat in nba_data.stats %}
-                        <div class="bar-inner orange" style="width: 
+                    <div class="bar-inner orange" style="width: 
                             {% if stat in statbox_data['percentage_stats'] %}
                                 {{ (nba_data.stats[stat]|float / statbox_data['max_percentage']) * 100 }}%
                             {% elif stat in statbox_data['statbox_42_stats'] %}
@@ -438,59 +461,67 @@
                                 {{ (nba_data.stats[stat]|float / statbox_data['statbox_15']) * 100 }}%
                             {% endif %};"></div>
                     {% else %}
-                        <!-- Optional: handle missing stat in NBA data here, e.g., display 'N/A' or zero width -->
-                        <div class="bar-inner orange" style="width: 0%;"></div>
+                    <!-- Optional: handle missing stat in NBA data here, e.g., display 'N/A' or zero width -->
+                    <div class="bar-inner orange" style="width: 0%;"></div>
                     {% endif %}
                 </div>
                 <span class="nba-stat-value">
                     {% if stat in nba_data.stats %}
-                        {{ nba_data.stats[stat] }}
+                    {{ nba_data.stats[stat] }}
                     {% else %}
-                        N/A  <!-- Display 'N/A' or another indicator if the stat is missing -->
+                    N/A <!-- Display 'N/A' or another indicator if the stat is missing -->
                     {% endif %}
                 </span>
             </div>
             {% endfor %}
         </div>
     </div>
-    
-    
-    
+
+
+
     <br><br>
 
     <div class="mobile-only">
 
         <h4>Top 10 Matches</h4>
         {{ mobile_top_10_nba_matches|safe }}
-    
+
         <br><br>
         <br><br>
     </div>
 
     <br><br>
-    
+
     <div class="hide-on-mobile">
         <h4>Top Match Comparison</h4>
         {{ comparison_df|safe }}
-    
+
         <br><br>
-    
+
         <h4>Top 10 Matches</h4>
         {{ nba_dna_matches|safe }}
-    
+
         <br><br>
         <br><br>
     </div>
-    
+
 
     <script>
-        window.onpopstate = function(event) {
-          window.location.href = '/';
+        window.onpopstate = function (event) {
+            window.location.href = '/';
         };
+
+        // Hide the loading screen when the page is fully loaded
+        window.addEventListener('load', () => {
+            loadingScreen.classList.remove('active');
+        });
+
     </script>
-      
-      
-      
+
+
+
+
+
 
 </body>
 

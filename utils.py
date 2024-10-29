@@ -99,7 +99,7 @@ def adjust_stats(df):
     
     for col in columns_to_adjust:
         if col in adjusted_df.columns:
-            adjusted_df[col] = adjusted_df[col] * 1.2 # multiply by 1.2 to convert college stats to NBA (pro)
+            adjusted_df[col] = adjusted_df[col] * 1.13 # multiply by 1.2 to convert college stats to NBA (pro)
             
     return adjusted_df
 
