@@ -94,14 +94,12 @@ def adjust_stats(df):
         'eFG%', 'FT', 'FTA', 'FT%', 'ORB', 'DRB', 'TRB', 'AST', 'STL', 
         'BLK', 'TOV', 'PF', 'PTS'
     ]
-    
-    adjusted_df = df.copy()
-    
+        
     for col in columns_to_adjust:
-        if col in adjusted_df.columns:
-            adjusted_df[col] = adjusted_df[col] * 1.13 # multiply by 1.2 to convert college stats to NBA (pro)
+        if col in df.columns:
+            df[col] = round(df[col] * 1.13, 3) # multiply by 1.13 to convert college stats to NBA (pro)
             
-    return adjusted_df
+    return df
 
 def create_weights_df(profile):
 
