@@ -5,12 +5,12 @@ from dotenv import load_dotenv
 import numpy as np
 import os, logging, boto3, pandas as pd, io
 from loguru import logger
-from abc import ABC, abstractmethod
+from algorithms import run_algorithm
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Inheritance method for swapping algos
+# Strategy pattern method for swapping algos
 
 load_dotenv('../secrets/s3-hooperdna/.env')
 
@@ -132,162 +132,6 @@ def create_weights_df(profile):
     weights_df = pd.DataFrame(list(weight_profiles[selected_profile].items()), columns=["Stat", "Weight"]).set_index("Stat")
     return weights_df
 
-# Base class for DNA match calculators
-class BaseDNAMatchCalculator(ABC):
-    @abstractmethod
-    def calculate_dna_match(self, college_player_df, nba_players_df, weights_df):
-        pass
-
-# Simple DNA match calculator class
-class SimpleDNAMatchCalculator(BaseDNAMatchCalculator):
-    def calculate_dna_match(self, college_player_df, nba_players_df, weights_df):
-        try:
-            if len(college_player_df) != 1:
-                raise ValueError("college_player_df should contain only one row.")
-            
-            logger.info("Starting Simple DNA match calculation...")
-            
-            position_mapping = {
-                "G": ["PG", "SG"],
-                "F": ["SF", "PF"],
-                "C": ["C"]
-            }
-            
-            college_position = college_player_df.iloc[0]["Pos"]
-            if college_position not in position_mapping:
-                raise ValueError("Invalid college position")
-
-            valid_nba_positions = position_mapping[college_position]
-            nba_filtered_df = nba_players_df[nba_players_df["Pos"].isin(valid_nba_positions)].copy()
-            
-            logger.info(f"Filtered NBA DataFrame to {len(nba_filtered_df)} rows based on position.")
-
-            stat_columns = list(set(college_player_df.columns) & set(nba_filtered_df.columns) - {"Season", "Team", "Conf", "Class", "Pos", "G", "GS", "Awards"})
-            logger.info(f"Using stat columns: {stat_columns}")
-
-            filtered_weights = weights_df.loc[stat_columns].values.flatten()
-
-            if np.linalg.norm(filtered_weights) != 0:
-                filtered_weights /= np.linalg.norm(filtered_weights)
-
-            college_stats = college_player_df[stat_columns].values.flatten().astype(float)
-
-            dna_matches = []
-            for idx, nba_row in nba_filtered_df.iterrows():
-                nba_stats = nba_row[stat_columns].values.flatten().astype(float)
-
-                valid_indices = ~np.isnan(college_stats) & ~np.isnan(nba_stats)
-                
-                if not valid_indices.any():
-                    logger.debug(f"Skipping row {idx} due to no valid indices.")
-                    dna_matches.append(np.nan)
-                    continue
-                
-                college_stats_valid = college_stats[valid_indices]
-                nba_stats_valid = nba_stats[valid_indices]
-                weights_valid = filtered_weights[valid_indices]
-
-                weighted_college_stats = college_stats_valid * weights_valid
-                weighted_nba_stats = nba_stats_valid * weights_valid
-
-                dot_product = np.dot(weighted_college_stats, weighted_nba_stats)
-                norm_college = np.linalg.norm(weighted_college_stats)
-                norm_nba = np.linalg.norm(weighted_nba_stats)
-
-                if norm_college == 0 or norm_nba == 0:
-                    logger.debug(f"Skipping row {idx} due to zero norm.")
-                    dna_matches.append(np.nan)
-                    continue
-
-                cosine_similarity = dot_product / (norm_college * norm_nba)
-
-                absolute_differences = np.abs(weighted_college_stats - weighted_nba_stats)
-                penalty_factor = min(1, np.mean(absolute_differences) / np.max(absolute_differences)) if np.max(absolute_differences) != 0 else 0
-
-                adjusted_similarity_score = cosine_similarity * (1 - penalty_factor)
-                similarity_score = round(adjusted_similarity_score * 100, 1)
-                similarity_score = max(0, min(100, similarity_score))
-                
-                dna_matches.append(similarity_score)
-
-            if len(dna_matches) != len(nba_filtered_df):
-                logger.error("Mismatch in length between DNA matches and NBA DataFrame.")
-                raise ValueError("Mismatch in length between DNA matches and NBA DataFrame.")
-
-            nba_filtered_df["DNA Match"] = dna_matches
-            logger.info("Simple DNA match calculation completed successfully.")
-            return nba_filtered_df.sort_values(by="DNA Match", ascending=False).reset_index(drop=True)
-
-        except Exception as e:
-            logger.error(f"An error occurred in SimpleDNAMatchCalculator: {e}")
-            raise
-
-# Legacy DNA match calculator class
-class LegacyDNAMatchCalculator(BaseDNAMatchCalculator):
-    def calculate_dna_match(self, college_player_df, nba_players_df, weights_df):
-        try:
-            if len(college_player_df) != 1:
-                raise ValueError("college_player_df should contain only one row.")
-            
-            logger.info("Starting Legacy DNA match calculation...")
-            
-            position_mapping = {
-                "G": ["PG", "SG"],
-                "F": ["SF", "PF"],
-                "C": ["C"]
-            }
-            
-            college_position = college_player_df.iloc[0]["Pos"]
-            if college_position not in position_mapping:
-                raise ValueError("Invalid college position")
-
-            valid_nba_positions = position_mapping[college_position]
-            nba_filtered_df = nba_players_df[nba_players_df["Pos"].isin(valid_nba_positions)].copy()
-            
-            stat_columns = list(set(college_player_df.columns) & set(nba_filtered_df.columns) - {"Season", "Team", "Conf", "Class", "Pos", "G", "GS", "Awards"})
-            logger.info(f"Using stat columns: {stat_columns}")
-
-            filtered_weights = weights_df.loc[stat_columns].values.flatten()
-            college_stats = college_player_df[stat_columns].values.flatten().astype(float)
-
-            dna_matches = []
-            for idx, nba_row in nba_filtered_df.iterrows():
-                nba_stats = nba_row[stat_columns].values.flatten().astype(float)
-
-                valid_indices = ~np.isnan(college_stats) & ~np.isnan(nba_stats)
-                
-                if not valid_indices.any():
-                    dna_matches.append(np.nan)
-                    continue
-                
-                college_stats_valid = college_stats[valid_indices]
-                nba_stats_valid = nba_stats[valid_indices]
-                weights_valid = filtered_weights[valid_indices]
-
-                weighted_diff = (college_stats_valid - nba_stats_valid) * weights_valid
-                distance = np.linalg.norm(weighted_diff)
-                
-                max_distance = np.sqrt(len(stat_columns)) * np.max([np.ptp(college_stats_valid * weights_valid), np.ptp(nba_stats_valid * weights_valid)])
-                max_distance = max_distance if max_distance != 0 else 1
-                
-                similarity_score = 100 * (1 - (distance / max_distance))
-                similarity_score = round(similarity_score, 1)
-                similarity_score = max(0, min(100, similarity_score))
-                
-                dna_matches.append(similarity_score)
-
-            if len(dna_matches) != len(nba_filtered_df):
-                logger.error("Mismatch in length between DNA matches and NBA DataFrame.")
-                raise ValueError("Mismatch in length between DNA matches and NBA DataFrame.")
-
-            nba_filtered_df["DNA Match"] = dna_matches
-            logger.info("Legacy DNA match calculation completed successfully.")
-            return nba_filtered_df.sort_values(by="DNA Match", ascending=False).reset_index(drop=True)
-
-        except Exception as e:
-            logger.error(f"An error occurred in LegacyDNAMatchCalculator: {e}")
-            raise
-
 def load_nba_data(year):
     df = read_csv_from_s3('hooperdna-storage', f'nba_raw_data/{year}_NBAPlayerStats_HprDNA_raw.csv')
     return df
@@ -309,16 +153,9 @@ def find_matches_before_college_player(year, adjusted_college_stats_df, weights_
 
         nba_players_df = load_nba_data(year=year)
 
-        if selected_algo == 'simple':
+        # run_algo function (algo based on selected algo)
+        nba_with_dna_match = run_algorithm(selected_algo, adjusted_college_stats_df, nba_players_df, weights_df)
 
-            simple_calculator = SimpleDNAMatchCalculator()
-            nba_with_dna_match = simple_calculator.calculate_dna_match(adjusted_college_stats_df, nba_players_df, weights_df)
-        
-        elif selected_algo == 'legacy':
-
-            legacy_calculator = LegacyDNAMatchCalculator()
-            nba_with_dna_match = legacy_calculator.calculate_dna_match(adjusted_college_stats_df, nba_players_df, weights_df)
-        
         top_nba_match = nba_with_dna_match.iloc[[0]]
 
         for col in top_nba_match.columns:
