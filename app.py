@@ -35,23 +35,25 @@ def submit():
     logger.info("Processing form submission...")
     player_id = request.form.get('player_id')
     selected_profile = request.form.get('selected_profile')
+    selected_algo = request.form.get('selected_algo')
     if not player_id or not selected_profile:
 
         logger.error('Missing player ID or profile selection. Redirecting to homepage.')
         return redirect(url_for('results'))
     
     logger.info("Player id & selected profile captured successfully...")
-    return redirect(url_for('results', player_id=player_id, selected_profile=selected_profile))
+    return redirect(url_for('results', player_id=player_id, selected_profile=selected_profile, selected_algo=selected_algo))
         
 @app.route('/results')
 def results():
         
     college_player_id = request.args.get('player_id')
     selected_profile = request.args.get('selected_profile')
-    selected_algo = 'simple'
+    selected_algo = request.args.get('selected_algo')
 
     logger.info(college_player_id)
     logger.info(selected_profile)
+    logger.info(selected_algo)
 
     college_player_name = get_college_player_name(college_player_id)
 

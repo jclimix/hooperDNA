@@ -28,7 +28,6 @@ def simple_calculate_dna_match(college_player_df, nba_players_df, weights_df):
         
         logger.info(f"Filtered NBA DataFrame to {len(nba_filtered_df)} rows based on position.")
 
-        # Get stat columns that are common to both DataFrames
         stat_columns = list(set(college_player_df.columns) & set(nba_filtered_df.columns) - {"Season", "Team", "Conf", "Class", "Pos", "G", "GS", "Awards"})
         logger.info(f"Using stat columns: {stat_columns}")
 
@@ -48,14 +47,13 @@ def simple_calculate_dna_match(college_player_df, nba_players_df, weights_df):
             
             if not valid_indices.any():
                 logger.debug(f"Skipping row {idx} due to no valid indices.")
-                dna_matches.append(np.nan)  # Ensure a value is added to maintain length
+                dna_matches.append(np.nan)  
                 continue
             
             college_stats_valid = college_stats[valid_indices]
             nba_stats_valid = nba_stats[valid_indices]
             weights_valid = filtered_weights[valid_indices]
 
-            # Apply weights
             weighted_college_stats = college_stats_valid * weights_valid
             weighted_nba_stats = nba_stats_valid * weights_valid
 
@@ -66,7 +64,7 @@ def simple_calculate_dna_match(college_player_df, nba_players_df, weights_df):
 
             if norm_college == 0 or norm_nba == 0:
                 logger.debug(f"Skipping row {idx} due to zero norm.")
-                dna_matches.append(np.nan)  # Ensure a value is added to maintain length
+                dna_matches.append(np.nan)
                 continue
 
             cosine_similarity = dot_product / (norm_college * norm_nba)
@@ -78,15 +76,12 @@ def simple_calculate_dna_match(college_player_df, nba_players_df, weights_df):
             else:
                 penalty_factor = np.mean(absolute_differences) / np.max(absolute_differences)
             
-            penalty_factor = min(1, penalty_factor)  # Ensure penalty is at most 1
+            penalty_factor = min(1, penalty_factor)
 
-            # Adjust similarity score with penalty
             adjusted_similarity_score = cosine_similarity * (1 - penalty_factor)
 
-            # Convert to a similarity score between 0 and 100
             similarity_score = round(adjusted_similarity_score * 100, 1)
 
-            # Ensure the similarity score is within 0-100
             similarity_score = max(0, min(100, similarity_score))
             
             dna_matches.append(similarity_score)

@@ -90,7 +90,8 @@
         }
 
         #player-input,
-        #selected_profile {
+        #selected_profile,
+        #selected_algo{
             width: 100%;
             padding: 10px;
             margin-bottom: 15px;
@@ -271,6 +272,11 @@
                             <option value="defense">Defense</option>
                             <option selected value="balanced">Balanced</option>
                         </select>
+                        
+                        <select id="selected_algo" name="selected_algo">
+                            <option selected value="simple">Simple Matching Algorithm</option>
+                            <option value="legacy">Legacy Matching Algorithm</option>
+                        </select>
 
                         <!-- Submit button -->
                         <button type="submit" formmethod="post">Find DNA Match</button>
@@ -434,6 +440,7 @@
 
             const playerId = document.getElementById('player_id').value;
             const selected_profile = document.getElementById('selected_profile').value;
+            const selected_algo = document.getElementById('selected_algo').value;
 
             if (!playerId) {
                 alert('Please select a player before submitting.');
