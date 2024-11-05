@@ -10,7 +10,8 @@ from utils import (
     adjust_stats, 
     create_weights_df,
     find_matches_before_college_player, 
-    scrape_nba_player_data
+    scrape_nba_player_data,
+    round_stats
 )
 
 app = Flask(__name__)
@@ -47,6 +48,7 @@ def results():
         
     college_player_id = request.args.get('player_id')
     selected_profile = request.args.get('selected_profile')
+    selected_algo = 'simple'
 
     logger.info(college_player_id)
     logger.info(selected_profile)
@@ -62,7 +64,7 @@ def results():
 
     weights_df = create_weights_df(selected_profile)
 
-    all_nba_matches = find_matches_before_college_player(college_player_season, adjusted_college_stats_df, weights_df)
+    all_nba_matches = find_matches_before_college_player(college_player_season, adjusted_college_stats_df, weights_df, selected_algo)
     top_10_nba_matches = all_nba_matches.head(10)
 
     with pd.option_context('display.max_columns', None):
@@ -111,6 +113,12 @@ def results():
     statbox_27_stats = ["FG", "FGA", "3P", "3PA", "FT", "FTA"]
     statbox_15_stats = ["AST", "TRB", "ORB", "DRB"]
     statbox_5_stats = ["TOV", "PF", "STL", "BLK"]
+
+    college_player_stats_df = round_stats(college_player_stats_df)
+    top_1_nba_match_stats = round_stats(top_1_nba_match_stats)
+    top_10_nba_matches = round_stats(top_10_nba_matches)
+    mobile_top_10_nba_matches = round_stats(mobile_top_10_nba_matches)
+    college_nba_join_stats = round_stats(college_nba_join_stats)
 
     selected_columns = percentage_stats + statbox_42_stats + statbox_27_stats + statbox_15_stats + statbox_5_stats
     existing_columns = [col for col in selected_columns if col in college_player_stats_df.columns]

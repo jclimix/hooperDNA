@@ -1,11 +1,6 @@
-import requests
-import re
-from bs4 import BeautifulSoup
 from unittest.mock import patch, Mock
 from dotenv import load_dotenv
-import numpy as np
-import os, logging, boto3, pandas as pd, io
-from loguru import logger
+import logging, pandas as pd
 import pytest
 
 logger = logging.getLogger(__name__)
@@ -41,10 +36,8 @@ def test_get_college_player_name(player_id, expected_result):
     ("fake-id", (None, None, "https://i.ibb.co/vqkzb0m/temp-player-pic.png"))
 ])
 def test_scrape_college_data(player_id, expected_output):
-    # Call the real function
     result = scrape_college_data(player_id)
 
-    # Check the output
     expected_height, expected_df, expected_image_link = expected_output
     result_height, result_df, result_image_link = result
 
@@ -59,8 +52,6 @@ def test_scrape_college_data(player_id, expected_output):
 
     assert result_image_link == expected_image_link, f"Expected image link: {expected_image_link}, but got: {result_image_link}"
 
-
-
 def test_adjust_stats():
     data = {
         'MP': [20, 30, 25],
@@ -69,10 +60,8 @@ def test_adjust_stats():
     }
     df = pd.DataFrame(data)
 
-    # Run the function
     adjusted_df = adjust_stats(df)
 
-    # Expected output after adjustment
     expected_data = {
         'MP': [22.6, 33.9, 28.25],
         'FG': [5.65, 11.3, 7.91],
@@ -80,12 +69,10 @@ def test_adjust_stats():
     }
     expected_df = pd.DataFrame(expected_data)
 
-    # Check that the adjusted DataFrame matches the expected output
     pd.testing.assert_frame_equal(adjusted_df, expected_df, check_exact=False, rtol=1e-3)
 
 
 def test_create_weights_df():
-    # Test offense profile
     offense_weights = create_weights_df("offense")
     expected_offense_data = {
         "Stat": ["MP", "FG", "FGA", "FG%", "3P", "3PA", "3P%", "2P", "2PA", "2P%", "eFG%", "FT", "FTA", "FT%", "ORB", "DRB", "TRB", "AST", "STL", "BLK", "TOV", "PF", "PTS"],
@@ -94,7 +81,6 @@ def test_create_weights_df():
     expected_offense_df = pd.DataFrame(expected_offense_data).set_index("Stat")
     pd.testing.assert_frame_equal(offense_weights, expected_offense_df, check_exact=False, rtol=1e-3)
 
-    # Test defense profile
     defense_weights = create_weights_df("defense")
     expected_defense_data = {
         "Stat": ["MP", "FG", "FGA", "FG%", "3P", "3PA", "3P%", "2P", "2PA", "2P%", "eFG%", "FT", "FTA", "FT%", "ORB", "DRB", "TRB", "AST", "STL", "BLK", "TOV", "PF", "PTS"],
@@ -103,7 +89,6 @@ def test_create_weights_df():
     expected_defense_df = pd.DataFrame(expected_defense_data).set_index("Stat")
     pd.testing.assert_frame_equal(defense_weights, expected_defense_df, check_exact=False, rtol=1e-3)
 
-    # Test balanced profile
     balanced_weights = create_weights_df("balanced")
     expected_balanced_data = {
         "Stat": ["MP", "FG", "FGA", "FG%", "3P", "3PA", "3P%", "2P", "2PA", "2P%", "eFG%", "FT", "FTA", "FT%", "ORB", "DRB", "TRB", "AST", "STL", "BLK", "TOV", "PF", "PTS"],
@@ -137,10 +122,8 @@ def test_calculate_dna_match():
 
     result_df = calculate_dna_match(college_player_df, nba_players_df, weights_df)
 
-    # Check if DNA Match column is present
     assert "DNA Match" in result_df.columns
 
-    # Ensure result is sorted by "DNA Match" in descending order
     assert result_df["DNA Match"].is_monotonic_decreasing
 
 def test_find_matches_before_college_player(mocker):
@@ -151,8 +134,8 @@ def test_find_matches_before_college_player(mocker):
             "MP": [24, 30],
             "FG": [5, 7],
             "PTS": [16, 20],
-            "DNA Match": [0, 0]  # Initial placeholders
-        }) for _ in range(20)  # Adjust the range to match `last_n_years`
+            "DNA Match": [0, 0]  
+        }) for _ in range(20) 
     ]
 
     college_player_data = {
@@ -171,21 +154,17 @@ def test_find_matches_before_college_player(mocker):
 
     result_df = find_matches_before_college_player("2024", college_player_df, weights_df)
 
-    # Check if DNA Match column is present and results are sorted
     assert "DNA Match" in result_df.columns
     assert result_df["DNA Match"].is_monotonic_decreasing
 
-    # Ensure the result DataFrame is not empty
     assert not result_df.empty
 
 def test_scrape_nba_player_data(mocker):
-    # Mock the read_csv_from_s3 function
     mocker.patch('utils.read_csv_from_s3', return_value=pd.DataFrame({
         'playerName': ['Michael Jordan'],
         'playerId': ['d/michael-jordan-1']
     }))
 
-    # Mock the requests.get function
     mock_response = mocker.Mock()
     mock_response.text = """
     <div id="meta">
@@ -198,6 +177,5 @@ def test_scrape_nba_player_data(mocker):
 
     image_link, height = scrape_nba_player_data('Michael Jordan')
 
-    # Assertions
     assert image_link == "https://www.sports-reference.com/req/202302071/cbb/images/players/michael-jordan-1.jpg"
     assert height == "6-6"
