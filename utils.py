@@ -229,5 +229,5 @@ def round_stats(df):
             df[column] = df[column].apply(lambda x: int(round(x)) if pd.notnull(x) else x)
         elif column in float_columns:
             df[column] = df[column].apply(lambda x: round(x, 1) if pd.notnull(x) else x)
-
+ 
     return df
