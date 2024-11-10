@@ -10,6 +10,10 @@ from abc import ABC, abstractmethod
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
+class HooperException(Execption):
+    pass
+
 # Inheritance method for swapping algos
 
 load_dotenv('../secrets/s3-hooperdna/.env')
@@ -135,8 +139,100 @@ def create_weights_df(profile):
 # Base class for DNA match calculators
 class BaseDNAMatchCalculator(ABC):
     @abstractmethod
-    def calculate_dna_match(self, college_player_df, nba_players_df, weights_df):
+    def calculate_dna_match(self, college_player_df: pd.DataFrame, nba_players_df: pd.DataFrame, weights_df: pd.DataFrame):
         pass
+
+'''
+class Foo:
+    # class method because function does not depend on any attributes or data instinsic to the class
+    # all of the logic is in the method
+    @classmethod
+    def bar():
+        pass
+
+/lib
+/lib/matching.py
+in lib/matching.py this function exist
+
+from lib.matching import calculate_dna_match
+
+if the CollegePlayer contained the weights to convert it's stats to NBA stats
+''     NBAPlayer class contained the weights to convert it's stats to College stats
+
+class NBAPlayer:
+    def __init__(self, id: int, weights: df.DataFrame =predefined_df, raw_player_stats: df.DataFrame = foo):
+        .... set stuff inside here
+
+    def to_college():
+        # lebron_college = NBAPlayer(1).to_college() == random_college_player() where this is a college player instance of a class
+
+def calculate_dna_match(self, CollegePlayer, NBAPlayer):
+    pass
+    
+class Player(ABC):
+@abstractmethod
+def transform():
+because we have a binary choice of nba or college
+based on teh class we're on
+we will take the data stored in self.data and multiply or do whatever to it with the weights to convert to the other class's
+this would return either a dataframe... for now
+
+@abstractmethod
+def calculate_player_distance(player_b):
+pass
+
+
+
+class NBAPlayer(Player):
+each class has weights
+def calculate_player_distance(player_b):
+if isinstance(player_b) == NBAPlayer:
+   then you're comparing two NBAplayer
+   execute matching for two nba players
+if isinstance(player_b)== CollegePlayer:
+   then convert player_b to nbaplayer by calling transform
+   then you can do fancy matching logic on nbaplayer.data_frame_containing_stats with player_b.transform()
+else isinstance(player_b) not in [NBAPlayer, CollegePlayer]:
+raise exception because what are we even doing here?
+
+class CollegePlayer(Player):
+each class has weights
+def calculate_player_distance(player_b):
+pass
+
+nba_player_a
+
+college_player_b
+
+nba_player_a.calculate_player_distance(college_player_b)
+
+global weights
+
+weights = {
+'college':
+}
+
+let's say we're convert from fahrenheit to celsious
+
+conversion = {
+'nba_to_college':function(),
+'nba_to_g_leauge':function(),
+'...'
+}
+
+
+how do i make this more generic and composable
+
+currently too tightly coupled
+
+i the programmer need to be intimately aware of the dataframes and their columns
+
+but i would like them to be abstracted such that i can convert back and forth
+
+pd.csv() -> it's all in the DataFrameClass that the csv function uses
+pd.csv(file='foo.csv') 
+
+'''
 
 # Simple DNA match calculator class
 class SimpleDNAMatchCalculator(BaseDNAMatchCalculator):
@@ -218,6 +314,7 @@ class SimpleDNAMatchCalculator(BaseDNAMatchCalculator):
             logger.info("Simple DNA match calculation completed successfully.")
             return nba_filtered_df.sort_values(by="DNA Match", ascending=False).reset_index(drop=True)
 
+        # A catch all exception is often a code-smell
         except Exception as e:
             logger.error(f"An error occurred in SimpleDNAMatchCalculator: {e}")
             raise
@@ -244,6 +341,8 @@ class LegacyDNAMatchCalculator(BaseDNAMatchCalculator):
             valid_nba_positions = position_mapping[college_position]
             nba_filtered_df = nba_players_df[nba_players_df["Pos"].isin(valid_nba_positions)].copy()
             
+            # this line here is too clever by half
+            # consider a comment or a few intermediate steps
             stat_columns = list(set(college_player_df.columns) & set(nba_filtered_df.columns) - {"Season", "Team", "Conf", "Class", "Pos", "G", "GS", "Awards"})
             logger.info(f"Using stat columns: {stat_columns}")
 
@@ -286,7 +385,13 @@ class LegacyDNAMatchCalculator(BaseDNAMatchCalculator):
 
         except Exception as e:
             logger.error(f"An error occurred in LegacyDNAMatchCalculator: {e}")
-            raise
+            raise HooperException("something insane happened")
+            '''
+            an exception was raise HooperException at line x message: "something insane happened"
+            but you can see if the exeption had a good message and name it would add more context to the error
+            good examples are the DivideByZero exception -- which tells you not that that something bad happened
+            but what happened....
+            '''
 
 def load_nba_data(year):
     df = read_csv_from_s3('hooperdna-storage', f'nba_raw_data/{year}_NBAPlayerStats_HprDNA_raw.csv')
