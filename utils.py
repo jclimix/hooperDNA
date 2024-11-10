@@ -90,6 +90,7 @@ def scrape_college_data(player_id):
 
     return college_player_height, df, college_image_link
 
+# add a comment as to what this does and why, adjust stats how? in what direction? why?
 def adjust_stats(df):
 
     columns_to_adjust = [
@@ -100,6 +101,7 @@ def adjust_stats(df):
         
     for col in columns_to_adjust:
         if col in df.columns:
+            # TODO: calculation literals should be CONSTANTS
             df[col] = round(df[col] * 1.13, 3) # multiply by 1.13 to convert college stats to NBA (pro)
             
     return df
@@ -127,15 +129,47 @@ def create_weights_df(profile):
         }
     }
 
+    # TODO: just use profile here
     selected_profile = profile
 
     weights_df = pd.DataFrame(list(weight_profiles[selected_profile].items()), columns=["Stat", "Weight"]).set_index("Stat")
     return weights_df
 
+# TODO: all of these need comments, but also error handling
+# figure out where do you handle the errors?
+# does the caller? should you? What happens if this fails? return a None? empty?
 def load_nba_data(year):
     df = read_csv_from_s3('hooperdna-storage', f'nba_raw_data/{year}_NBAPlayerStats_HprDNA_raw.csv')
     return df
 
+# TODO: refactor this function's name to make more sense
+# add a comment
+# comments really should only be business logic
+# jan from accounting really likes excel formulas to be rounded to 6 places, explains why the round(n, 6 ) is here
+# but if you see something like "this function called foo_bar_baz_jabroni" does x, y, z
+# the function either needs to be broken into smaller functions
+# OR renamed to make more sense, usually it's the former
+
+# you often want to comment about the inputs and outputs of a function
+# parameter: type e.g field_goal_percentage: float ...
+# helpful also this function is used often with functions a,b,c
+# in the doc string, an example of how to call the function
+# function add(a: int,b: int)->int: takes two integers and returns an integer as the sum of them
+# e.g add(1,2) -> 3
+# df.to_csv(......)
+# examples:
+# to just write the csv with the defaults to the filesystem
+# df.to_csv(file='foo.csv')
+# ...
+# these example lines are often substituted by using tests, becuase people can read the tests and the tests are run
+# really good projects have examples in the docstrings and tests
+
+
+# you might have _helper functions _my_func that do things that don't need a top level public function
+# all fucntions without a _ or __ are public def foo() is public def _foo() is not
+# but this being python all are exposed and seen
+# but by convention the private functions are not to be called
+# and are often not really tested
 def find_matches_before_college_player(year, adjusted_college_stats_df, weights_df, selected_algo):
         
     all_nba_matches = pd.DataFrame()
@@ -143,6 +177,10 @@ def find_matches_before_college_player(year, adjusted_college_stats_df, weights_
     year = int(year[:4])
     last_n_years = 20
 
+    # TODO: constants be declared at the top
+    # df.fill_na()
+    # df.drop_na()
+    # joins with dataframes -- like a table you can join maybe only on some common thing
     if (year - last_n_years) < 1970:
         start_year = 1970
     else:
@@ -168,6 +206,8 @@ def find_matches_before_college_player(year, adjusted_college_stats_df, weights_
 
     return all_nba_matches
 
+# def enrich_player_data_with_image_and_height
+# def scrape_external_nba_data
 def scrape_nba_player_data(nba_match_player_name):
 
     df = read_csv_from_s3('hooperdna-storage', 'nba_player_data/nba_players_n_ids.csv')
@@ -216,7 +256,7 @@ def scrape_nba_player_data(nba_match_player_name):
         return None, None
 
     return image_link, height
-import pandas as pd
+
 
 def round_stats(df):
     # percentage_columns = ["FG%", "3P%", "2P%", "eFG%", "FT%"]
