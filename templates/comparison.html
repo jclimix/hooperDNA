@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HooperDNA | {{ college_player.name }} Matches</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-light: #60a5fa;
+            --secondary: #1e40af;
+            --dark: #0f172a;
+            --darker: #0a0f1d;
+            --card-bg: #1e293b;
+            --text: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent: #f97316;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Lexend', sans-serif;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .logo-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            max-width: 300px;
+            height: auto;
+            display: block;
+        }
+
+        .main-player {
+            display: flex;
+            align-items: center;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .main-player::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 8px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+        }
+
+        .player-image {
+            width: 120px;
+            height: 180px;
+            border-radius: 12px;
+            margin-right: 2rem;
+            object-fit: cover;
+            border: 4px solid var(--primary);
+            background-color: #1e293b;
+        }
+
+        .player-info h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+
+        .player-info p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .player-stats {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            max-width: 700px;
+        }
+
+        .stat-item {
+            text-align: center;
+            min-width: 70px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-light);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .stats-toggle {
+            margin-top: 1rem;
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid var(--primary);
+            color: var(--text);
+            border-radius: 5px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .stats-toggle:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .advanced-stats {
+            display: none;
+            margin-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+        }
+
+        .matches-section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+            position: relative;
+            display: inline-block;
+        }
+
+        .matches-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .match-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .match-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .match-percentage {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 1.1rem;
+        }
+
+        .navbar {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            min-height: 40px;
+        }
+
+        .navbar .container {
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .navbar-brand {
+            font-size: 1.3rem;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            margin-right: 0.5rem;
+        }
+
+        .navbar .nav-link {
+            padding-top: 0.25rem !important;
+            padding-bottom: 0.25rem !important;
+        }
+
+        .navbar-toggler {
+            padding: 0.2rem 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .match-player-image {
+            width: 120px;
+            height: 180px;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            object-fit: cover;
+            border: 4px solid var(--accent);
+            background-color: #1e293b;
+        }
+
+        .match-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .match-card p {
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .match-stats {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            justify-content: center;
+        }
+
+        .match-stat-item {
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .match-stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-light);
+        }
+
+        .match-stat-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .match-advanced-stats {
+            display: none;
+            margin-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+            width: 100%;
+        }
+
+        .comparison-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comparison-section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            margin-bottom: 2rem;
+        }
+
+        .back-btn:hover {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 1.5rem 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .img-fallback {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #334155;
+            color: var(--text-secondary);
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .main-player {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .player-image {
+                margin-right: 0;
+                margin-bottom: 1.5rem;
+            }
+
+            .player-stats {
+                justify-content: center;
+            }
+
+            .matches-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- The navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-basketball me-2"></i>
+                HooperDNA <span class="version-badge">(v{{ version }})</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://hooper-labs.com"><i class="fas fa-flask me-1"></i> HooperLabs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/jclimix/hooperDNA" target="_blank"><i
+                                class="fab fa-github me-1"></i> GitHub</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                            href="https://docs.google.com/document/d/16ZT--az650_cqev4-6eHGdSkLtlgf3suRpujZgElr_k/edit?usp=sharing"
+                            target="_blank"><i class="fas fa-info-circle me-1"></i> About</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header class="logo-header">
+            <img src="/static/images/logo.png" alt="HooperDNA Logo" class="logo">
+        </header>
+
+        <a href="/" class="back-btn">← Back to Search</a>
+
+        <div class="main-player">
+            <img src="{{ college_player.image_url }}" alt="{{ college_player.name }}" class="player-image"
+                onerror="this.onerror=null; this.src='/static/images/placeholder-player.png'; this.classList.add('img-fallback');">
+            <div class="player-info">
+                <h2>{{ college_player.name }}</h2>
+                <p>{{ college_player.season }} Season</p>
+                <p>{{ college_player.position }} | {{ college_player.height }}</p>
+
+                <div class="player-stats">
+                    <!-- Core Stats (Always Visible) -->
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.points) }}</div>
+                        <div class="stat-label">PPG</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.total_rebounds) }}</div>
+                        <div class="stat-label">RPG</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.assists) }}</div>
+                        <div class="stat-label">APG</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.steals) }}</div>
+                        <div class="stat-label">SPG</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.blocks) }}</div>
+                        <div class="stat-label">BPG</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.field_goal_pct * 100) }}</div>
+                        <div class="stat-label">FG%</div>
+                    </div>
+                </div>
+
+                <button class="stats-toggle" onclick="toggleCollegeStats()">Show More Stats</button>
+
+                <div class="player-stats advanced-stats" id="collegeAdvancedStats">
+                    <!-- Advanced Stats (Shown when toggled) -->
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.minutes_played) }}</div>
+                        <div class="stat-label">MPG</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.offensive_rebounds) }}</div>
+                        <div class="stat-label">OREB</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.defensive_rebounds) }}</div>
+                        <div class="stat-label">DREB</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.turnovers) }}</div>
+                        <div class="stat-label">TO</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.personal_fouls) }}</div>
+                        <div class="stat-label">PF</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.free_throw_pct * 100) }}</div>
+                        <div class="stat-label">FT%</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.three_point_pct * 100) }}</div>
+                        <div class="stat-label">3P%</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.two_point_pct * 100) }}</div>
+                        <div class="stat-label">2P%</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.two_pointers_made) }}</div>
+                        <div class="stat-label">2PM</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.three_pointers_made) }}</div>
+                        <div class="stat-label">3PM</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(college_player.stats.free_throws_made) }}</div>
+                        <div class="stat-label">FTM</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="matches-section">
+            <h2>NBA DNA Matches ({{ algo_weight_str }})</h2>
+
+            <div class="matches-grid">
+                {% for match in nba_matches %}
+                <div class="match-card">
+                    <div class="match-percentage">{{ "%.1f"|format(match.match_percentage) }}% Match</div>
+                    <img src="{{ match.image_url }}" alt="{{ match.name }}" class="match-player-image"
+                        onerror="this.onerror=null; this.src='/static/images/placeholder-player.png'; this.classList.add('img-fallback');">
+                    <h3>{{ match.name }}</h3>
+                    <p>{{ match.team }}</p>
+                    <p>{{ match.position }} | {{ match.season }}</p>
+
+                    <div class="match-stats">
+                        <!-- Core Stats (Always Visible) -->
+                        <div class="match-stat-item">
+                            <div class="match-stat-value">{{ "%.1f"|format(match.stats.points) }}</div>
+                            <div class="match-stat-label">PPG</div>
+                        </div>
+                        <div class="match-stat-item">
+                            <div class="match-stat-value">{{ "%.1f"|format(match.stats.total_rebounds) }}</div>
+                            <div class="match-stat-label">RPG</div>
+                        </div>
+                        <div class="match-stat-item">
+                            <div class="match-stat-value">{{ "%.1f"|format(match.stats.assists) }}</div>
+                            <div class="match-stat-label">APG</div>
+                        </div>
+                        <div class="match-stat-item">
+                            <div class="match-stat-value">{{ "%.1f"|format(match.stats.steals) }}</div>
+                            <div class="match-stat-label">SPG</div>
+                        </div>
+                        <div class="match-stat-item">
+                            <div class="match-stat-value">{{ "%.1f"|format(match.stats.blocks) }}</div>
+                            <div class="match-stat-label">BPG</div>
+                        </div>
+                        <div class="match-stat-item">
+                            <div class="match-stat-value">{{ "%.1f"|format(match.stats.field_goal_pct * 100) }}</div>
+                            <div class="match-stat-label">FG%</div>
+                        </div>
+                    </div>
+
+                    <button class="stats-toggle" onclick="toggleNbaStats(this)">Show More Stats</button>
+
+                    <div class="match-advanced-stats">
+                        <!-- Advanced Stats (Shown when toggled) -->
+                        <div class="match-stats">
+                            <div class="match-stat-item">
+                                <div class="match-stat-value">{{ "%.1f"|format(match.stats.minutes_played) }}</div>
+                                <div class="match-stat-label">MPG</div>
+                            </div>
+                            <div class="match-stat-item">
+                                <div class="match-stat-value">{{ "%.1f"|format(match.stats.offensive_rebounds) }}</div>
+                                <div class="match-stat-label">OREB</div>
+                            </div>
+                            <div class="match-stat-item">
+                                <div class="match-stat-value">{{ "%.1f"|format(match.stats.defensive_rebounds) }}</div>
+                                <div class="match-stat-label">DREB</div>
+                            </div>
+                            <div class="match-stat-item">
+                                <div class="match-stat-value">{{ "%.1f"|format(match.stats.turnovers) }}</div>
+                                <div class="match-stat-label">TO</div>
+                            </div>
+                            <div class="match-stat-item">
+                                <div class="match-stat-value">{{ "%.1f"|format(match.stats.personal_fouls) }}</div>
+                                <div class="match-stat-label">PF</div>
+                            </div>
+                            <div class="match-stat-item">
+                                <div class="match-stat-value">{{ "%.1f"|format(match.stats.free_throw_pct * 100) }}
+                                </div>
+                                <div class="match-stat-label">FT%</div>
+                            </div>
+                            <div class="match-stat-item">
+                                <div class="match-stat-value">{{ "%.1f"|format(match.stats.three_point_pct * 100) }}
+                                </div>
+                                <div class="match-stat-label">3P%</div>
+                            </div>
+                            <div class="match-stat-item">
+                                <div class="match-stat-value">{{ "%.1f"|format(match.stats.two_point_pct * 100) }}</div>
+                                <div class="match-stat-label">2P%</div>
+                            </div>
+                            <div class="match-stat-item">
+                                <div class="match-stat-value">{{ "%.1f"|format(match.stats.two_pointers_made) }}</div>
+                                <div class="match-stat-label">2PM</div>
+                            </div>
+                            <div class="match-stat-item">
+                                <div class="match-stat-value">{{ "%.1f"|format(match.stats.three_pointers_made) }}</div>
+                                <div class="match-stat-label">3PM</div>
+                            </div>
+                            <div class="match-stat-item">
+                                <div class="match-stat-value">{{ "%.1f"|format(match.stats.free_throws_made) }}</div>
+                                <div class="match-stat-label">FTM</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        {% if nba_matches|length > 0 %}
+        <section class="comparison-section">
+            <h2>DNA Match Comparison: {{ college_player.name }} vs. {{ nba_matches[0].name }}</h2>
+            <div class="chart-container">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+        </section>
+        {% endif %}
+
+        <footer>
+            <p>© 2025 HooperDNA | Universe-J</p>
+        </footer>
+    </div>
+
+    <script>
+        // Toggle college player advanced stats
+        function toggleCollegeStats() {
+            const advancedStats = document.getElementById('collegeAdvancedStats');
+            const button = document.querySelector('.stats-toggle');
+
+            if (advancedStats.style.display === 'flex') {
+                advancedStats.style.display = 'none';
+                button.textContent = 'Show More Stats';
+            } else {
+                advancedStats.style.display = 'flex';
+                button.textContent = 'Show Less Stats';
+            }
+        }
+
+        // Toggle NBA player advanced stats
+        function toggleNbaStats(button) {
+            const card = button.parentElement;
+            const advancedStats = card.querySelector('.match-advanced-stats');
+
+            if (advancedStats.style.display === 'block') {
+                advancedStats.style.display = 'none';
+                button.textContent = 'Show More Stats';
+            } else {
+                advancedStats.style.display = 'block';
+                button.textContent = 'Show Less Stats';
+            }
+        }
+    </script>
+
+    {% if nba_matches|length > 0 %}
+    <script>
+        // Set up the chart
+        const ctx = document.getElementById('comparisonChart').getContext('2d');
+        const comparisonChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ comparison_labels| tojson }},
+        datasets: [
+            {
+                label: '{{ college_player.name }}',
+                data: {{ comparison_data.college_player | tojson }},
+            backgroundColor: '#3b82f6',
+            borderColor: '#2563eb',
+            borderWidth: 1
+                    },
+            {
+                label: '{{ nba_matches[0].name }}',
+                data: {{ comparison_data.nba_player | tojson }},
+            backgroundColor: '#f97316',
+            borderColor: '#ea580c',
+            borderWidth: 1
+                    }
+        ]
+            },
+        options: {
+            responsive: true,
+                maintainAspectRatio: false,
+                    plugins: {
+                legend: {
+                    position: 'top',
+                        labels: {
+                        color: '#e2e8f0'
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                        intersect: false,
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                titleColor: '#e2e8f0',
+                                    bodyColor: '#e2e8f0',
+                                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                                            borderWidth: 1
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                        grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                            drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                            drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8'
+                    }
+                }
+            }
+        }
+        });
+    </script>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

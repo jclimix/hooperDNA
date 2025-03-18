@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HooperDNA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-light: #60a5fa;
+            --secondary: #1e40af;
+            --dark: #0f172a;
+            --darker: #0a0f1d;
+            --card-bg: #1e293b;
+            --text: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent: #f97316;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Lexend', sans-serif;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .navbar {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            min-height: 40px;
+        }
+
+        .navbar .container {
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .navbar-brand {
+            font-size: 1.3rem;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            margin-right: 0.5rem;
+        }
+
+        .navbar .nav-link {
+            padding-top: 0.25rem !important;
+            padding-bottom: 0.25rem !important;
+        }
+
+        .navbar-toggler {
+            padding: 0.2rem 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            max-width: 300px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .search-form {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .search-form::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 8px;
+            height: 100%;
+            background: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(0, 0, 0, 0.2);
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .autocomplete-container {
+            position: relative;
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 0 8px 8px;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background-color 0.2s ease;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.selected {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .autocomplete-item .player-name {
+            font-weight: 500;
+            color: var(--text);
+            padding: 4px 0;
+        }
+
+        .no-results {
+            padding: 0.75rem 1rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        #player_id {
+            display: none;
+        }
+
+        select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: var(--darker);
+            color: white;
+            font-size: 1rem;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.5em;
+        }
+
+        .search-btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background-color: var(--primary-light);
+        }
+
+        .examples {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .examples h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+            position: relative;
+            display: inline-block;
+        }
+
+        .examples h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .example-item {
+            cursor: pointer;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .example-item:hover {
+            background-color: rgba(59, 130, 246, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .example-item h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-light);
+        }
+
+        .example-item p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 1.5rem 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .spinner {
+            display: none;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        @keyframes spin {
+            to {
+                transform: translateY(-50%) rotate(360deg);
+            }
+        }
+
+        .spinner.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-basketball me-2"></i>
+                HooperDNA <span class="version-badge">(v{{ version }})</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://hooper-labs.com"><i class="fas fa-flask me-1"></i> HooperLabs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/jclimix/hooperDNA" target="_blank"><i
+                                class="fab fa-github me-1"></i> GitHub</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                            href="https://docs.google.com/document/d/16ZT--az650_cqev4-6eHGdSkLtlgf3suRpujZgElr_k/edit?usp=sharing"
+                            target="_blank"><i class="fas fa-info-circle me-1"></i> About</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header>
+            <img src="/static/images/logo.png" alt="HooperDNA Logo" class="logo">
+        </header>
+
+        <form class="search-form" action="/process" method="POST">
+            <div class="form-group">
+                <label for="player_search">College Player Name</label>
+                <div class="autocomplete-container">
+                    <input type="text" id="player_search" name="player_search"
+                        placeholder="Start typing a player name..." autocomplete="off">
+                    <input type="hidden" id="player_id" name="player_id">
+                    <div class="spinner" id="search-spinner"></div>
+                    <div class="autocomplete-dropdown" id="autocomplete-results"></div>
+                </div>
+                <p style="margin-top: 5px; font-size: 0.9rem; color: var(--text-secondary);">
+                    Type a player's name to search, then select from the dropdown
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="algo_weight">Analysis Profile</label>
+                <select id="algo_weight" name="algo_weight">
+                    <option value="offense">Offensive Focus</option>
+                    <option value="defense">Defensive Focus</option>
+                    <option value="balanced">Balanced Analysis</option>
+                </select>
+            </div>
+
+            <button type="submit" class="search-btn" id="submit-btn" disabled>Find DNA Matches</button>
+        </form>
+
+        <section class="examples">
+            <h2>Quick Search</h2>
+            <p style="margin-bottom: 1.5rem;">Click on any of these examples to quickly analyze their NBA DNA matches.
+            </p>
+
+            <div class="examples-grid">
+                <div class="example-item" data-player-name="Caitlin Clark" data-player-id="caitlin-clark-1">
+                    <h3>Caitlin Clark</h3>
+                    <p>Guard | Iowa</p>
+                </div>
+
+                <div class="example-item" data-player-name="Anthony Davis" data-player-id="anthony-davis-1">
+                    <h3>Anthony Davis</h3>
+                    <p>Forward | Kentucky</p>
+                </div>
+
+                <div class="example-item" data-player-name="Kevin Durant" data-player-id="kevin-durant-1">
+                    <h3>Kevin Durant</h3>
+                    <p>Forward | Texas</p>
+                </div>
+
+                <div class="example-item" data-player-name="Stephen Curry" data-player-id="stephen-curry-2">
+                    <h3>Stephen Curry</h3>
+                    <p>Guard | Davidson</p>
+                </div>
+
+                <div class="example-item" data-player-name="Zion Williamson" data-player-id="zion-williamson-1">
+                    <h3>Zion Williamson</h3>
+                    <p>Forward | Duke</p>
+                </div>
+
+                <div class="example-item" data-player-name="Angel Reese" data-player-id="angel-reese-1">
+                    <h3>Angel Reese</h3>
+                    <p>Forward | LSU</p>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>© 2025 HooperDNA | Universe-J</p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const playerSearchInput = document.getElementById('player_search');
+            const playerIdInput = document.getElementById('player_id');
+            const autocompleteResults = document.getElementById('autocomplete-results');
+            const searchSpinner = document.getElementById('search-spinner');
+            const submitBtn = document.getElementById('submit-btn');
+
+            let selectedIndex = -1;
+            let allResults = [];
+
+            // Function to fetch player suggestions
+            async function fetchPlayerSuggestions(query) {
+                searchSpinner.classList.add('show');
+
+                try {
+                    const response = await fetch(`/api/search_players?q=${encodeURIComponent(query)}`);
+                    const data = await response.json();
+                    return data.players;
+                } catch (error) {
+                    console.error('Error fetching player suggestions:', error);
+                    return [];
+                } finally {
+                    searchSpinner.classList.remove('show');
+                }
+            }
+
+            // Function to display results in dropdown
+            function displayResults(results) {
+                autocompleteResults.innerHTML = '';
+                allResults = results;
+
+                if (results.length === 0) {
+                    const noResults = document.createElement('div');
+                    noResults.classList.add('no-results');
+                    noResults.textContent = 'No players found';
+                    autocompleteResults.appendChild(noResults);
+                } else {
+                    results.forEach((player, index) => {
+                        const resultItem = document.createElement('div');
+                        resultItem.classList.add('autocomplete-item');
+                        resultItem.setAttribute('data-index', index);
+
+                        // Just show player name without details
+                        const nameElement = document.createElement('div');
+                        nameElement.classList.add('player-name');
+                        nameElement.textContent = player.player_name;
+
+                        resultItem.appendChild(nameElement);
+
+                        resultItem.addEventListener('click', () => {
+                            selectPlayer(player, index);
+                        });
+
+                        autocompleteResults.appendChild(resultItem);
+                    });
+                }
+
+                autocompleteResults.classList.add('show');
+            }
+
+            // Function to select a player
+            function selectPlayer(player, index) {
+                playerSearchInput.value = player.player_name;
+                playerIdInput.value = player.player_id;
+                autocompleteResults.classList.remove('show');
+                selectedIndex = -1;
+                submitBtn.disabled = false;
+            }
+
+            // Handle input changes
+            let debounceTimer;
+            playerSearchInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+
+                const query = this.value.trim();
+
+                if (query.length < 2) {
+                    autocompleteResults.classList.remove('show');
+                    submitBtn.disabled = true;
+                    playerIdInput.value = '';
+                    return;
+                }
+
+                debounceTimer = setTimeout(async () => {
+                    const results = await fetchPlayerSuggestions(query);
+                    displayResults(results);
+                }, 300);
+            });
+
+            // Handle keyboard navigation
+            playerSearchInput.addEventListener('keydown', function (e) {
+                const items = document.querySelectorAll('.autocomplete-item');
+
+                // Arrow up
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(0, selectedIndex - 1);
+                    highlightSelected(items);
+                }
+                // Arrow down
+                else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(items.length - 1, selectedIndex + 1);
+                    highlightSelected(items);
+                }
+                // Enter
+                else if (e.key === 'Enter' && selectedIndex > -1) {
+                    e.preventDefault();
+                    if (allResults[selectedIndex]) {
+                        selectPlayer(allResults[selectedIndex], selectedIndex);
+                    }
+                }
+                // Escape
+                else if (e.key === 'Escape') {
+                    autocompleteResults.classList.remove('show');
+                }
+            });
+
+            // Highlight selected item
+            function highlightSelected(items) {
+                items.forEach(item => item.classList.remove('selected'));
+                if (selectedIndex > -1 && items[selectedIndex]) {
+                    items[selectedIndex].classList.add('selected');
+                    items[selectedIndex].scrollIntoView({ block: 'nearest' });
+                }
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function (e) {
+                if (!autocompleteResults.contains(e.target) && e.target !== playerSearchInput) {
+                    autocompleteResults.classList.remove('show');
+                }
+            });
+
+            // Quick-select example players
+            document.querySelectorAll('.example-item').forEach(item => {
+                item.addEventListener('click', function () {
+                    const playerId = this.getAttribute('data-player-id');
+                    const playerName = this.getAttribute('data-player-name');
+
+                    playerIdInput.value = playerId;
+                    playerSearchInput.value = playerName;
+                    submitBtn.disabled = false;
+
+                    document.querySelector('.search-form').submit();
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
