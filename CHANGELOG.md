@@ -1,5 +1,8 @@
 # Changelog
 
+## [2.1.0] - 2025-03-21
+- Added college/university names to college player card
+
 ## [2.0.2] - 2025-03-21
 - Modified cosine similarity algo to coerce columns BEFORE analysis/comparison
 - This means more college players should result in acual matches instead of errors (i.e. Austin Reaves)

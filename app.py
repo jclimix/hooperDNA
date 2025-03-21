@@ -100,9 +100,10 @@ def create_app():
             college_player_slug = college_player_name.lower().replace(' ', '-')
             college_image_url = f"https://www.sports-reference.com/req/202302071/cbb/images/players/{college_player_slug}-1.jpg"
             
-            # get the latest season and position
+            # get the latest season, position, and team
             latest_season = college_player_stats_df["Season"].iloc[0]
             college_position = college_player_stats_df["Pos"].iloc[0]
+            college_team = college_player_stats_df["Team"].iloc[0]
             latest_year = season_to_year(latest_season)
             
             # get last 10 seasons for comparison
@@ -168,6 +169,7 @@ def create_app():
                 'height': college_player_height if college_player_height else "Unknown",
                 'position': college_position if college_position else "Unknown",
                 'season': latest_season if latest_season else "Unknown",
+                'team': college_team if college_team else "Unknown Tean",
                 'stats': college_stats_dict,
                 'image_url': college_image_url
             }
