@@ -220,9 +220,12 @@ def simple_calculate_dna_match(college_player_df, nba_players_df, weights_df):
         # 1.2x increase to available projection columns
         for col in projection_columns:
             if col in college_player_projected.columns:
+                # convert to numeric first, forcing non-numeric values to NaN since it loves errors
+                college_player_projected[col] = pd.to_numeric(college_player_projected[col], errors='coerce')
+
                 college_player_projected[col] = college_player_projected[col] * 1.2
         
-        # convert to numeric safely, coercing errors to NaN
+        # convert to numeric safely again, coercing errors to NaN since it really loves errors
         college_stats = pd.to_numeric(college_player_projected[valid_stat_columns].values.flatten(), errors='coerce')
 
         dna_matches = []
@@ -382,7 +385,7 @@ def process_dna_match():
 
 if __name__ == '__main__':
 
-    college_player_id = 'caitlin-clark-1'
+    college_player_id = 'austin-reaves-1'
     algo_weight = 'offense'
 
     process_dna_match()
